@@ -1,0 +1,31 @@
+{
+  "name": "course-directory",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "react-scripts": "1.0.6",
+    "redux-logger": "^3.0.6"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "d3-geo": "^1.11.3",
+    "d3-geo-projection": "^2.5.0",
+    "next-redux-wrapper": "^2.0.0",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
+    "react-motion": "^0.5.2",
+    "react-redux": "^5.1.1",
+    "react-router-dom": "^4.3.1",
+    "react-simple-maps": "^0.12.1",
+    "react-tooltip": "^3.9.0",
+    "redux": "^4.0.1",
+    "redux-tooltip": "^0.7.2",
+    "topojson-client": "^3.0.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
