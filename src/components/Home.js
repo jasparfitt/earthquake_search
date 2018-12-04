@@ -1,10 +1,16 @@
 import React, {Component} from 'react';
 import axios from 'axios';
 import ReactTooltip from "react-tooltip";
+import {
+  BrowserRouter,
+  Route,
+  Redirect
+} from 'react-router-dom';
 
 import Map from './Map';
 import MenuBar from './MenuBar';
-import LoadingWindow from './LoadingWindow'
+import LoadingWindow from './LoadingWindow';
+import InfoBar from './InfoBar';
 
 class Home extends Component {
   state = {
@@ -12,7 +18,9 @@ class Home extends Component {
     earth: {},
     quakes: [],
     searchArea: [],
-    loading: true
+    loading: false,
+    searchCount: 0,
+    focused: ''
   }
 
   componentDidMount () {
@@ -36,49 +44,40 @@ class Home extends Component {
     })
   }
 
-  defineSearchArea = (lat, lng, rad) => {
-    let circleMarkers = [];
-    console.log(rad)
-    for (let i=0; i<360; i++) {
-      let x = rad * Math.cos(i * Math.PI / 180) + lat;
-      let y = rad * Math.sin(i * Math.PI / 180) + lng;
-      circleMarkers.push({coordinates: [x, y]})
-    }
-    this.setState({
-      searchArea:  circleMarkers
-    })
-  }
-
-  getSearchCount = (searchTerms) => {
+  getSearchCount = (searchTerms, startYear, endYear) => {
     let countRequest = `https://earthquake.usgs.gov/fdsnws/event/1/count?`
-    axios.get(countRequest + searchTerms)
-    .then(response => {
-      console.log(response.data)
-      return(response.data)
-    })
+    let count = 0;
+    for (let i=startYear; i<endYear; i+=10) {
+      axios.get(countRequest + searchTerms + `&starttime${i}-01-01&endtime${i+10}-01-01`)
+      .then(response => {
+        console.log(i)
+        count += response.data
+        this.setState({
+          searchCount: count
+        })
+        console.log(this.state.searchCount)
+      })
+    }
   }
 
-  getQuakeData = (searchTerms) => {
+  getQuakeData = (searchTerms,afterSearch) => {
     let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=100`;
-    axios.get(fullRequest + searchterms)
-    .then(response => {
-      console.log(response.data)
-      this.setState({
-        earth: response.data
+      axios.get(fullRequest + searchTerms + afterSearch)
+      .then(response => {
+        console.log(response.data)
+        this.setState({
+          earth: response.data
+        })
       })
-    })
-    .then(() => {
-      this.sortData()
-    })
-    .then(() =>{
-      setTimeout(() => {
-        ReactTooltip.rebuild()
-      }, 100)
-      this.setState({
-        loading: false
+      .then(() => {
+        this.sortData()
       })
-      console.log('finished search')
-    })
+      .then(() =>{
+        this.setState({
+          loading: false
+        })
+        console.log('search complete')
+      })
   }
 
   createSearchString = (maxMag, minMag, after, before, lat, lng, rad) => {
@@ -104,7 +103,7 @@ class Home extends Component {
     if (after) {
       searchTerms += `&starttime=${after}`
     } else {
-      searchTerms += `&starttime=1800-01-01`
+      searchTerms += `&starttime=1900-01-01`
     }
     return(searchTerms)
   }
@@ -133,34 +132,93 @@ class Home extends Component {
   }
 
   search = (maxMag, minMag, after, before, lat, lng, rad) => {
+    console.log('start search')
     this.setState({
       loading: true
     })
-    console.log('searching')
-
     let limitSearchTerms = this.createLimitedSearchString(maxMag, minMag, after, before, lat, lng, rad);
     let searchTerms = this.createSearchString(maxMag, minMag, after, before, lat, lng, rad);
-    let quakeCount = this.getSearchCount(searchTerms);
-    if (quakeCount > 1000) {
-      let prevYear = new Date(Date.now());
+    let hitLimit = false;
+    let afterNow = Date.now();
+    if (before) {
+      afterNow = Date.UTC(before.substr(0,4),before.substr(5,7),before.substr(8,10));
     }
+      afterNow -= 1000 * 60 * 60 * 24;
+      console.log(afterNow)
 
-    let limtedQuakeCount = this.getSearchCount(limitSearchTerms + `&starttime=${prevYear}-01-01`)
+      if (afterNow < Date.UTC(after.substr(0,4),after.substr(5,7),after.substr(8,10))) {
+        afterNow = new Date(after);
+        hitLimit = true;
+      } else {
+        afterNow = new Date(afterNow)
+      }
+      console.log(afterNow)
+      let afterSearch = `&starttime=${afterNow.toISOString().substr(0,10)}`
+
+      this.getQuakeData(limitSearchTerms,afterSearch);
+      console.log('done')
+  }
+
+  getOneQuake = id => {
+    this.setState({
+      loading: true
+    })
+    console.log('finding one quake')
+    axios.get(`https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventid=${id}`)
+    .then(response => {
+      this.setState({
+        earth: {features: [response.data]}
+      })
+    })
+    .then(() => {
+      this.sortData()
+    })
+    .then(() => {
+      console.log(this.state.quakes)
+      this.setState({
+        loading: false,
+        focused: this.state.quakes
+      })
+    })
   }
 
   render() {
     let loadWindow = (<LoadingWindow>
       <div className='loading'> Searching Database </div>
     </LoadingWindow>)
-    console.log(this.state.loading)
     return(
       <div className='app-container'>
         {this.state.loading? loadWindow : <div></div>}
         <Map
+          focused={this.state.focused[0]}
           markers={this.state.quakes}
           searchArea={this.state.searchArea}
         />
-        <MenuBar search={this.search} />
+        <Route exact
+          path='/home'
+          render={routeProps => (
+            <MenuBar
+              {...routeProps}
+              search={this.search}
+              searchCount={this.state.searchCount}
+            />
+          )}
+        />
+        <Route
+          path='/home/:id'
+          render={routeProps => {
+            console.log(routeProps)
+            if (!this.state.quakes.length && !this.state.loading) {
+              this.getOneQuake(routeProps.match.params.id)
+            }
+            return (
+              <InfoBar
+                {...routeProps}
+                quakes={this.state.quakes}
+              />
+            )
+          }}
+        />
       </div>
     )
   }

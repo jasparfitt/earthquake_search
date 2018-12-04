@@ -8,11 +8,14 @@ import {
   Marker
 } from "react-simple-maps";
 import ReactTooltip from "react-tooltip";
+import { withRouter } from 'react-router';
 
 class Map extends Component {
 
   state = {
-    zoom: 1.9
+    center:[0,20],
+    zoom: 1.9,
+    focused: ''
   }
 
   componentDidMount = () => {
@@ -41,6 +44,18 @@ class Map extends Component {
     }
   }
 
+  handleMarkerClick = (marker) => {
+    this.setState({
+      zoom: 15,
+      center: marker.coordinates
+    })
+    const { history: { push } } = this.props;
+    push(`/home/${marker.id}`+this.props.history.location.search);
+    this.setState({
+      focused: marker
+    })
+  }
+
   handleZoomOut = () => {
     this.setState({
       zoom: this.state.zoom / 1.1,
@@ -55,12 +70,40 @@ class Map extends Component {
   render() {
     let width = window.innerWidth * .8;
     let height = window.innerHeight * 0.98;
+    let focusedStateMarker = (
+      <Markers>
+        <Marker key={'focused'} marker={this.state.focused}>
+          <circle
+            cx={0}
+            cy={0}
+            r={10}
+            fill="#dd3501"
+            stroke="#dd3501"
+            strokeWidth="2"
+          />
+        </Marker>
+      </Markers>
+    )
+    let focusedPropsMarker = (
+      <Markers>
+        <Marker key={'focused'} marker={this.props.focused}>
+          <circle
+            cx={0}
+            cy={0}
+            r={10}
+            fill="#dd3501"
+            stroke="#dd3501"
+            strokeWidth="2"
+          />
+        </Marker>
+      </Markers>
+    )
     return(
       <div className='map' id='map'>
         <button className='in' onClick={ this.handleZoomIn }>{ "+" }</button>
         <button className='out' onClick={ this.handleZoomOut }>{ "-" }</button>
         <ComposableMap width={width} height={height}>
-          <ZoomableGroup zoom={this.state.zoom}>
+          <ZoomableGroup center={this.state.center} zoom={this.state.zoom}>
           <Geographies geography={ "/world-10m.json" }>
             {(geographies, projection) => geographies.map(geography => (
               <Geography
@@ -73,25 +116,13 @@ class Map extends Component {
                 />
             ))}
           </Geographies>
-          <Markers>
-            {this.props.searchArea.map((searchArea, i) => (
-              <Marker key={i} marker={searchArea}>
-                <circle
-                  cx={0}
-                  cy={0}
-                  r={1}
-                  fill="#607D8B"
-                  stroke="#607D8B"
-                  strokeWidth="2"
-                />
-              </Marker>
-            ))}
-          </Markers>
+          {this.state.focused? focusedStateMarker : (this.props.focused? focusedPropsMarker : <div></div>)}
           <Markers>
             {this.props.markers.map((marker, i) => (
               <Marker
                 key={marker.id}
                 marker={marker}
+                onClick={this.handleMarkerClick}
                 style={{
                     default: { fill: "#FF5722" },
                     hover: { fill: "#FFFFFF" },
@@ -99,6 +130,7 @@ class Map extends Component {
                   }}
               >
                 <circle
+                  className={marker.id}
                   cx={0}
                   cy={0}
                   data-tip={`Magnitude:${marker.magnitude} <br />
@@ -109,7 +141,7 @@ class Map extends Component {
                   style={{
                     stroke: "#FF5722",
                     strokeWidth: 3,
-                    opacity: 0.9,
+                    opacity: 1,
                   }}
                 />
               </Marker>
@@ -122,4 +154,4 @@ class Map extends Component {
   }
 }
 
-export default Map
+export default withRouter(Map)

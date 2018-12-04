@@ -107,7 +107,8 @@ class MenuBar extends Component{
 
   render () {
     return(
-      <div className='menubar'>
+      <div className='sidebar'>
+        <p> {`Found ${this.props.searchCount} earthquakes matching these search parameters`} </p>
         <h2>Search Parameters</h2>
         <form onSubmit={this.handleSubmit}>
           <label>Magnitudes greater than</label> <br/>
