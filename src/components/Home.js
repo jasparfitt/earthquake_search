@@ -49,27 +49,27 @@ class Home extends Component {
     })
   }
 
-  getSearchCount = (searchTerms, startYear, endYear) => {
-    let countRequest = `https://earthquake.usgs.gov/fdsnws/event/1/count?`
-    let count = 0;
-    for (let i=startYear; i<endYear; i+=10) {
-      axios.get(countRequest + searchTerms + `&starttime${i}-01-01&endtime${i+10}-01-01`)
-      .then(response => {
-        console.log(i)
-        count += response.data
-        this.setState({
-          searchCount: count
-        })
-        console.log(this.state.searchCount)
-      })
-    }
-  }
-
-  getQuakeData = (searchTerms,afterSearch) => {
+  getSearchCount = (searchTerms, afterSearch) => {
     this.setState({
       done: false
     })
+    let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/count?`;
+      axios.get(fullRequest + searchTerms + afterSearch)
+      .then(response => {
+        this.setState({
+          searchCount: response.data
+        })
+      })
+      .then(() =>{
+        this.setState({
+          done: true
+        })
+      })
+  }
+
+  getQuakeData = (searchTerms,afterSearch) => {
     let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=100`;
+    console.log(fullRequest + searchTerms + afterSearch)
       axios.get(fullRequest + searchTerms + afterSearch)
       .then(response => {
         console.log(response.data)
@@ -82,38 +82,15 @@ class Home extends Component {
       })
       .then(() =>{
         this.setState({
-          done: true
+          loading: false,
+          searchCount: 0,
+          done: false
         })
         console.log('search complete')
+        setTimeout(() => {
+          ReactTooltip.rebuild()
+        }, 1000)
       })
-  }
-
-  createSearchString = (maxMag, minMag, after, before, lat, lng, rad) => {
-    let searchTerms = ``;
-    if (maxMag) {
-      searchTerms += `&maxmagnitude=${maxMag}`
-    }
-    if (minMag) {
-      searchTerms += `&minmagnitude=${minMag}`
-    }
-    if (before) {
-      searchTerms += `&endtime=${before}`
-    }
-    if (lat) {
-      searchTerms += `&latitude=${lat}`
-    }
-    if (lng) {
-      searchTerms += `&longitude=${lng}`
-    }
-    if (rad) {
-      searchTerms += `&maxradiuskm=${rad}`
-    }
-    if (after) {
-      searchTerms += `&starttime=${after}`
-    } else {
-      searchTerms += `&starttime=1900-01-01`
-    }
-    return(searchTerms)
   }
 
   createLimitedSearchString = (maxMag, minMag, after, before, lat, lng, rad) => {
@@ -145,15 +122,14 @@ class Home extends Component {
       loading: true
     })
     let limitSearchTerms = this.createLimitedSearchString(maxMag, minMag, after, before, lat, lng, rad);
-    let searchTerms = this.createSearchString(maxMag, minMag, after, before, lat, lng, rad);
     let hitLimit = false;
     let afterNow = Date.now();
-    let afterLimit = Date.UTC(2018,0,1)
+    let afterLimit = Date.UTC(1900,0,1)
     if (after) {
-      afterLimit = Date.UTC(after.substr(0,4),before.substr(5,7),before.substr(8,10))
+      afterLimit = Date.UTC(after.substr(0,4),before.substr(5,7)-1,before.substr(8,10))
     }
     if (before) {
-      afterNow = Date.UTC(before.substr(0,4),before.substr(5,7),before.substr(8,10));
+      afterNow = Date.UTC(before.substr(0,4),before.substr(5,7)-1,before.substr(8,10));
     }
     afterNow -= 1000 * 60 * 60 * 24 * 30;
     if (afterNow < afterLimit) {
@@ -162,31 +138,27 @@ class Home extends Component {
     }
     console.log('searchafter'+new Date(afterNow))
     let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
-    this.getQuakeData(limitSearchTerms,afterSearch);
+    this.getSearchCount(limitSearchTerms,afterSearch);
     this.continueExec(afterNow,afterLimit,hitLimit,limitSearchTerms)
   }
 
   continueExec = (afterNow, afterLimit, hitLimit, limitSearchTerms) => {
-    console.log(this.state.done)
   if (!this.state.done) {
-      setTimeout(() => {this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms)}, 1000);
-      console.log(`waiting`)
+      setTimeout(() => {this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms)}, 100);
   } else {
-
-    console.log('length'+this.state.quakes.length)
-    if (this.state.quakes.length === 100 || hitLimit) {
-      this.setState({
-        loading: false
-      })
+    console.log('length  ' + this.state.searchCount)
+    if (this.state.searchCount >= 100 || hitLimit) {
+      let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
+      this.getQuakeData(limitSearchTerms,afterSearch)
     } else {
-      afterNow -= 1000 * 60 * 60 * 24;
+      afterNow -= 1000 * 60 * 60 * 24 * 30;
       if (afterNow < afterLimit) {
         afterNow = afterLimit;
         hitLimit = true;
       }
-      console.log('searchafter'+new Date(afterNow))
+      console.log('searchafter  '+new Date(afterNow))
       let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
-      this.getQuakeData(limitSearchTerms,afterSearch);
+      this.getSearchCount(limitSearchTerms,afterSearch);
       console.log(this.state.done)
       this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms);
     }
@@ -267,6 +239,7 @@ class Home extends Component {
             )
           }}
         />
+        <ReactTooltip multiline={true}/>
       </div>
     )
   }

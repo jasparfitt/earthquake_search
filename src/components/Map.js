@@ -74,10 +74,10 @@ class Map extends Component {
           <circle
             cx={0}
             cy={0}
-            r={10}
-            fill="#dd3501"
+            r={8}
+            fill="#FF5722"
             stroke="#dd3501"
-            strokeWidth="2"
+            strokeWidth="5"
           />
         </Marker>
       </Markers>
@@ -100,7 +100,6 @@ class Map extends Component {
                 />
             ))}
           </Geographies>
-          {this.props.focused? focusedMarker : <div></div>}
           <Markers>
             {this.props.markers.map((marker, i) => (
               <Marker
@@ -120,7 +119,7 @@ class Map extends Component {
                   data-tip={`Magnitude:${marker.magnitude} <br />
                               ${marker.place} <br />
                               ${marker.date}-${marker.month+1}-${marker.year} <br />
-                              ${marker.coordinates}`}
+                              click for more info`}
                   r={5}
                   style={{
                     stroke: "#FF5722",
@@ -131,8 +130,11 @@ class Map extends Component {
               </Marker>
             ))}
           </Markers>
+
+          {this.props.focused? focusedMarker : ''}
           </ZoomableGroup>
         </ComposableMap>
+        <ReactTooltip multiline={true}/>
       </div>
     )
   }
