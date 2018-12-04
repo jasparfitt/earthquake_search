@@ -13,15 +13,15 @@ class MenuBar extends Component{
     let afterState = '';
     let beforeState = '';
     if (after) {
-      let afterDay = after.substring(8, 10);
-      let afterMonth = after.substring(5, 7);
-      let afterYear = after.substring(0, 4);
+      let afterDay = after.substring(0, 2);
+      let afterMonth = after.substring(3, 5);
+      let afterYear = after.substring(6, 10);
       afterState = `${afterDay}-${afterMonth}-${afterYear}`;
     }
     if (before) {
-      let beforeDay = before.substring(8, 10);
-      let beforeMonth = before.substring(5, 7);
-      let beforeYear = before.substring(0, 4);
+      let beforeDay = before.substring(0, 2);
+      let beforeMonth = before.substring(3, 5);
+      let beforeYear = before.substring(6, 10);
       beforeState = `${beforeDay}-${beforeMonth}-${beforeYear}`;
     }
 
@@ -37,7 +37,7 @@ class MenuBar extends Component{
   }
 
   componentDidMount() {
-    if (this.state.minMag || this.state.maxMag || this.state.after || this.state.before || this.state.lat || this.state.lng || this.state.rad) {
+    if ((this.state.minMag || this.state.maxMag || this.state.after || this.state.before || this.state.lat || this.state.lng || this.state.rad) && !this.props.searched) {
       this.props.search(this.state.maxMag, this.state.minMag, this.state.after, this.state.before, this.state.lat, this.state.lng, this.state.rad)
     }
   }
@@ -56,13 +56,13 @@ class MenuBar extends Component{
       let day = this.state.after.substring(0, 2);
       let month = this.state.after.substring(3, 5);
       let year = this.state.after.substring(6, 10);
-      path += `&after=${year}-${month}-${day}`
+      path += `&after=${day}-${month}-${year}`
     }
     if (this.state.before) {
       let day = this.state.before.substring(0, 2);
       let month = this.state.before.substring(3, 5);
       let year = this.state.before.substring(6, 10);
-      path += `&before=${year}-${month}-${day}`
+      path += `&before=${day}-${month}-${year}`
     }
     if (this.state.lat) {
       path += `&lat=${this.state.lat}`

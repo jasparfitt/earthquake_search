@@ -45,8 +45,12 @@ class Map extends Component {
   }
 
   handleMarkerClick = (marker) => {
+    if (this.state.zoom < 15) {
+      this.setState({
+        zoom: 15
+      })
+    }
     this.setState({
-      zoom: 15,
       center: marker.coordinates
     })
     const { history: { push } } = this.props;
@@ -81,6 +85,11 @@ class Map extends Component {
           />
         </Marker>
       </Markers>
+    )
+    let popUp = (
+      <div>
+
+      </div>
     )
     return(
       <div className='map' id='map'>

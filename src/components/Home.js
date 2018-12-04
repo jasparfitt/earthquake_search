@@ -21,7 +21,8 @@ class Home extends Component {
     loading: false,
     searchCount: 0,
     focused: '',
-    done: false
+    done: false,
+    searched: false
   }
 
   componentDidMount () {
@@ -119,39 +120,47 @@ class Home extends Component {
   search = (maxMag, minMag, after, before, lat, lng, rad) => {
     console.log('start search')
     this.setState({
-      loading: true
+      loading: true,
+      searched: true
     })
     let limitSearchTerms = this.createLimitedSearchString(maxMag, minMag, after, before, lat, lng, rad);
     let hitLimit = false;
     let afterNow = Date.now();
     let afterLimit = Date.UTC(1900,0,1)
+    let mag = 1;
     if (after) {
-      afterLimit = Date.UTC(after.substr(0,4),before.substr(5,7)-1,before.substr(8,10))
+      afterLimit = Date.UTC(after.substr(6,10),parseInt(after.substr(3,5))-1,after.substr(0,2));
+      console.log('---------------------------'+after)
     }
     if (before) {
-      afterNow = Date.UTC(before.substr(0,4),before.substr(5,7)-1,before.substr(8,10));
+      afterNow = Date.UTC(before.substr(6,10),parseInt(before.substr(3,5))-1,before.substr(0,2));
+      console.log('---------------------------'+before)
     }
-    afterNow -= 1000 * 60 * 60 * 24 * 30;
+    if (minMag) {
+      mag = Math.exp(minMag-1)
+    }
+    afterNow -= 1000 * 60 * 60 * 24 * 10 * mag;
     if (afterNow < afterLimit) {
       afterNow = afterLimit;
       hitLimit = true;
     }
-    console.log('searchafter'+new Date(afterNow))
+    console.log('search'+afterNow) // --------------------------------------------
     let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
     this.getSearchCount(limitSearchTerms,afterSearch);
-    this.continueExec(afterNow,afterLimit,hitLimit,limitSearchTerms)
+    this.continueExec(afterNow,afterLimit,hitLimit,limitSearchTerms, mag)
   }
 
-  continueExec = (afterNow, afterLimit, hitLimit, limitSearchTerms) => {
+  continueExec = (afterNow, afterLimit, hitLimit, limitSearchTerms, mag) => {
   if (!this.state.done) {
-      setTimeout(() => {this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms)}, 100);
+      setTimeout(() => {this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms, mag)}, 100);
   } else {
     console.log('length  ' + this.state.searchCount)
     if (this.state.searchCount >= 100 || hitLimit) {
+      console.log(new Date(afterNow).toISOString().substr(0,10))
       let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
       this.getQuakeData(limitSearchTerms,afterSearch)
     } else {
-      afterNow -= 1000 * 60 * 60 * 24 * 30;
+      afterNow -= 1000 * 60 * 60 * 24 * 10 * mag;
       if (afterNow < afterLimit) {
         afterNow = afterLimit;
         hitLimit = true;
@@ -160,7 +169,7 @@ class Home extends Component {
       let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
       this.getSearchCount(limitSearchTerms,afterSearch);
       console.log(this.state.done)
-      this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms);
+      this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms, mag);
     }
   }
 }
@@ -220,6 +229,7 @@ class Home extends Component {
               {...routeProps}
               search={this.search}
               searchCount={this.state.searchCount}
+              searched={this.state.searched}
             />
           )}
         />
