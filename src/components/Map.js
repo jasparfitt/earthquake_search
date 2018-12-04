@@ -51,9 +51,7 @@ class Map extends Component {
     })
     const { history: { push } } = this.props;
     push(`/home/${marker.id}`+this.props.history.location.search);
-    this.setState({
-      focused: marker
-    })
+    this.props.setFocused(marker);
   }
 
   handleZoomOut = () => {
@@ -70,21 +68,7 @@ class Map extends Component {
   render() {
     let width = window.innerWidth * .8;
     let height = window.innerHeight * 0.98;
-    let focusedStateMarker = (
-      <Markers>
-        <Marker key={'focused'} marker={this.state.focused}>
-          <circle
-            cx={0}
-            cy={0}
-            r={10}
-            fill="#dd3501"
-            stroke="#dd3501"
-            strokeWidth="2"
-          />
-        </Marker>
-      </Markers>
-    )
-    let focusedPropsMarker = (
+    let focusedMarker = (
       <Markers>
         <Marker key={'focused'} marker={this.props.focused}>
           <circle
@@ -116,7 +100,7 @@ class Map extends Component {
                 />
             ))}
           </Geographies>
-          {this.state.focused? focusedStateMarker : (this.props.focused? focusedPropsMarker : <div></div>)}
+          {this.props.focused? focusedMarker : <div></div>}
           <Markers>
             {this.props.markers.map((marker, i) => (
               <Marker

@@ -20,7 +20,8 @@ class Home extends Component {
     searchArea: [],
     loading: false,
     searchCount: 0,
-    focused: ''
+    focused: '',
+    done: false
   }
 
   componentDidMount () {
@@ -38,7 +39,11 @@ class Home extends Component {
           place: quake.properties.place,
           date: fullDate.getDate(),
           month: fullDate.getMonth(),
-          year: fullDate.getFullYear()
+          year: fullDate.getFullYear(),
+          depth: quake.geometry.coordinates[2],
+          hour: fullDate.getHours(),
+          minute: fullDate.getMinutes(),
+          felt: quake.properties.felt
         })
       })
     })
@@ -61,6 +66,9 @@ class Home extends Component {
   }
 
   getQuakeData = (searchTerms,afterSearch) => {
+    this.setState({
+      done: false
+    })
     let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=100`;
       axios.get(fullRequest + searchTerms + afterSearch)
       .then(response => {
@@ -74,7 +82,7 @@ class Home extends Component {
       })
       .then(() =>{
         this.setState({
-          loading: false
+          done: true
         })
         console.log('search complete')
       })
@@ -98,7 +106,7 @@ class Home extends Component {
       searchTerms += `&longitude=${lng}`
     }
     if (rad) {
-      searchTerms += `&maxradius=${rad}`
+      searchTerms += `&maxradiuskm=${rad}`
     }
     if (after) {
       searchTerms += `&starttime=${after}`
@@ -126,7 +134,7 @@ class Home extends Component {
       limitSearchTerms += `&longitude=${lng}`
     }
     if (rad) {
-      limitSearchTerms += `&maxradius=${rad}`
+      limitSearchTerms += `&maxradiuskm=${rad}`
     }
     return(limitSearchTerms)
   }
@@ -140,24 +148,50 @@ class Home extends Component {
     let searchTerms = this.createSearchString(maxMag, minMag, after, before, lat, lng, rad);
     let hitLimit = false;
     let afterNow = Date.now();
+    let afterLimit = Date.UTC(2018,0,1)
+    if (after) {
+      afterLimit = Date.UTC(after.substr(0,4),before.substr(5,7),before.substr(8,10))
+    }
     if (before) {
       afterNow = Date.UTC(before.substr(0,4),before.substr(5,7),before.substr(8,10));
     }
-      afterNow -= 1000 * 60 * 60 * 24;
-      console.log(afterNow)
-
-      if (afterNow < Date.UTC(after.substr(0,4),after.substr(5,7),after.substr(8,10))) {
-        afterNow = new Date(after);
-        hitLimit = true;
-      } else {
-        afterNow = new Date(afterNow)
-      }
-      console.log(afterNow)
-      let afterSearch = `&starttime=${afterNow.toISOString().substr(0,10)}`
-
-      this.getQuakeData(limitSearchTerms,afterSearch);
-      console.log('done')
+    afterNow -= 1000 * 60 * 60 * 24 * 30;
+    if (afterNow < afterLimit) {
+      afterNow = afterLimit;
+      hitLimit = true;
+    }
+    console.log('searchafter'+new Date(afterNow))
+    let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
+    this.getQuakeData(limitSearchTerms,afterSearch);
+    this.continueExec(afterNow,afterLimit,hitLimit,limitSearchTerms)
   }
+
+  continueExec = (afterNow, afterLimit, hitLimit, limitSearchTerms) => {
+    console.log(this.state.done)
+  if (!this.state.done) {
+      setTimeout(() => {this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms)}, 1000);
+      console.log(`waiting`)
+  } else {
+
+    console.log('length'+this.state.quakes.length)
+    if (this.state.quakes.length === 100 || hitLimit) {
+      this.setState({
+        loading: false
+      })
+    } else {
+      afterNow -= 1000 * 60 * 60 * 24;
+      if (afterNow < afterLimit) {
+        afterNow = afterLimit;
+        hitLimit = true;
+      }
+      console.log('searchafter'+new Date(afterNow))
+      let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
+      this.getQuakeData(limitSearchTerms,afterSearch);
+      console.log(this.state.done)
+      this.continueExec(afterNow, afterLimit, hitLimit, limitSearchTerms);
+    }
+  }
+}
 
   getOneQuake = id => {
     this.setState({
@@ -177,8 +211,20 @@ class Home extends Component {
       console.log(this.state.quakes)
       this.setState({
         loading: false,
-        focused: this.state.quakes
+        focused: this.state.quakes[0]
       })
+    })
+  }
+
+  removeFocused = () => {
+    this.setState({
+      focused: ''
+    })
+  }
+
+  setFocused = marker => {
+    this.setState({
+      focused: marker
     })
   }
 
@@ -190,9 +236,10 @@ class Home extends Component {
       <div className='app-container'>
         {this.state.loading? loadWindow : <div></div>}
         <Map
-          focused={this.state.focused[0]}
+          focused={this.state.focused}
           markers={this.state.quakes}
           searchArea={this.state.searchArea}
+          setFocused={this.setFocused}
         />
         <Route exact
           path='/home'
@@ -215,6 +262,7 @@ class Home extends Component {
               <InfoBar
                 {...routeProps}
                 quakes={this.state.quakes}
+                removeFocused={this.removeFocused}
               />
             )
           }}
