@@ -21,11 +21,10 @@ class Home extends Component {
     focused: '',
     done: false,
     searched: false,
-    noResults: false
-  }
-
-  componentDidMount () {
-
+    noResults: false,
+    queryString: '',
+    center:[0,0],
+    zoom: 1.9
   }
 
   sortData = () => {
@@ -186,6 +185,12 @@ class Home extends Component {
   }
 }
 
+saveSearch = (queryString) => {
+  this.setState({
+    queryString: queryString
+  })
+}
+
   getOneQuake = id => {
     this.setState({
       loading: true
@@ -221,9 +226,64 @@ class Home extends Component {
     })
   }
 
+  handleMouseWheel = () => {
+    let map = document.getElementById('map')
+    map.addEventListener('wheel', (e) => {
+      e.preventDefault()
+      if (e.wheelDelta > 0) {
+        this.handleZoomIn()
+      } else {
+        this.handleZoomOut()
+      }
+    }, false)
+    setTimeout(() => {
+      ReactTooltip.rebuild()
+    }, 1000)
+  }
+
+  handleZoomOut = () => {
+    this.setState((prevState) => ({
+      zoom: prevState.zoom / 1.1,
+    }))
+    if (this.state.zoom < 1.5) {
+      this.setState({
+        zoom: 1.5,
+      })
+    }
+  }
+
+  handleZoomIn = () => {
+    this.setState((prevState) => ({
+      zoom: prevState.zoom * 1.1,
+    }))
+    if (this.state.zoom > 50) {
+      this.setState({
+        zoom: 50,
+      })
+    }
+  }
+
+  markerZoomAndPan = (marker) => {
+    if (this.state.zoom < 15) {
+      this.setState({
+        zoom: 15
+      })
+    }
+    this.setState({
+      center: marker.coordinates
+    })
+  }
+
+  resetMap = () => {
+    this.setState({
+      zoom: 1.9,
+      center: [0, 0]
+    })
+  }
+
   render() {
     let loadWindow = (<LoadingWindow>
-      <div className='loading'> Searching Database </div>
+      <div className='loading'> <i class="fas fa-search-location"></i> Searching Database </div>
     </LoadingWindow>)
     return(
       <div className='home'>
@@ -234,6 +294,13 @@ class Home extends Component {
           searchArea={this.state.searchArea}
           setFocused={this.setFocused}
           noResults={this.state.noResults}
+          saveSearch={this.saveSearch}
+          center={this.state.center}
+          zoom={this.state.zoom}
+          handleZoomIn={this.handleZoomIn}
+          handleZoomOut={this.handleZoomOut}
+          handleMouseWheel={this.handleMouseWheel}
+          markerZoomAndPan={this.markerZoomAndPan}
         />
         <Route exact
           path='/home'
@@ -258,6 +325,8 @@ class Home extends Component {
                 {...routeProps}
                 quakes={this.state.quakes}
                 removeFocused={this.removeFocused}
+                queryString={this.state.queryString}
+                resetMap={this.resetMap}
               />
             )
           }}

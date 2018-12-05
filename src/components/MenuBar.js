@@ -169,11 +169,11 @@ class MenuBar extends Component{
             <input type='date' value={this.state.before}  onChange={this.beforeChange} /> <br/>
             <label><h3>Search Area</h3></label> <br/>
             <label>Latitude Position</label> <br/>
-            <input type='text' value={this.state.lat} required={this.state.required} onChange={this.latChange} /> <br/>
+            <input type='number' value={this.state.lat} min='-90' max='90' required={this.state.required} onChange={this.latChange} /> <br/>
             <label>Longitude Position</label> <br/>
-            <input type='text' value={this.state.lng} required={this.state.required} onChange={this.lngChange} /> <br/>
+            <input type='number' value={this.state.lng} min='-180' max='180' required={this.state.required} onChange={this.lngChange} /> <br/>
             <label>Within (km) </label> <br/>
-            <input type='text' value={this.state.rad} required={this.state.required} onChange={this.radChange} /> <br/>
+            <input type='number' value={this.state.rad} min='0' required={this.state.required} onChange={this.radChange} /> <br/>
             <input class='submit' onClick={this.handleCheck} type='submit' value='Search' />
           </form>
         </div>

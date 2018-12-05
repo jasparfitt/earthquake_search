@@ -12,61 +12,16 @@ import { withRouter } from 'react-router';
 
 class Map extends Component {
 
-  state = {
-    center:[0,0],
-    zoom: 1.9,
-    focused: ''
-  }
-
   componentDidMount = () => {
-    let map = document.getElementById('map')
-    map.addEventListener('wheel', (e) => {
-      e.preventDefault()
-      if (e.wheelDelta > 0) {
-        this.handleZoomIn()
-      } else {
-        this.handleZoomOut()
-      }
-    }, false)
-    setTimeout(() => {
-      ReactTooltip.rebuild()
-    }, 1000)
-  }
-
-  handleZoomIn = () => {
-    this.setState({
-      zoom: this.state.zoom * 1.1,
-    })
-    if (this.state.zoom > 50) {
-      this.setState({
-        zoom: 50,
-      })
-    }
+    this.props.handleMouseWheel();
   }
 
   handleMarkerClick = (marker) => {
-    if (this.state.zoom < 15) {
-      this.setState({
-        zoom: 15
-      })
-    }
-    this.setState({
-      center: marker.coordinates
-    })
+    this.props.markerZoomAndPan(marker)
     const { history: { push } } = this.props;
-    push(`/home/${marker.id}`+this.props.history.location.search);
+    this.props.saveSearch(this.props.history.location.search)
+    push(`/home/${marker.id}`);
     this.props.setFocused(marker);
-  }
-
-  handleZoomOut = () => {
-    this.setState({
-      zoom: this.state.zoom / 1.1,
-    })
-    if (this.state.zoom < 1.5) {
-      this.setState({
-        zoom: 1.5,
-      })
-    }
   }
 
   render() {
@@ -83,14 +38,14 @@ class Map extends Component {
         </Marker>
       </Markers>
     )
-    let noResultsPop = (<div className='no-results'> Sorry no earthquakes found matching these parameters</div>)
+    let noResultsPop = (<div className='no-results'><div className='no-results-text'><i class="fas fa-exclamation-triangle"></i><br/>Sorry, no earthquakes were found matching these parameters</div></div>)
     return(
       <div className='map' id='map'>
         {this.props.noResults? noResultsPop: ''}
         <button className='in' onClick={ this.handleZoomIn }>{ "+" }</button>
         <button className='out' onClick={ this.handleZoomOut }>{ "-" }</button>
         <ComposableMap width={width} height={height}>
-          <ZoomableGroup center={this.state.center} zoom={this.state.zoom}>
+          <ZoomableGroup center={this.props.center} zoom={this.props.zoom}>
           <Geographies geography={ "/world-10m.json" }>
             {(geographies, projection) => geographies.map(geography => (
               <Geography

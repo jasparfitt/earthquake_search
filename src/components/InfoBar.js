@@ -4,8 +4,13 @@ class InfoBar extends Component {
 
   handleBack = () => {
     const { history: { push } } = this.props;
-    push(`/home`+this.props.history.location.search);
-    this.props.removeFocused()
+    if (this.props.queryString) {
+      push(`/home`+this.props.queryString);
+    } else {
+      push(`/home`)
+    }
+    this.props.removeFocused();
+    this.props.resetMap();
   }
 
   render() {
