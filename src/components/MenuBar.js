@@ -1,8 +1,6 @@
 import React, {Component} from 'react';
 import { withRouter } from 'react-router';
 
-import LoadingWindow from './LoadingWindow'
-
 class MenuBar extends Component{
 
   constructor(props) {
@@ -16,13 +14,13 @@ class MenuBar extends Component{
       let afterDay = after.substring(0, 2);
       let afterMonth = after.substring(3, 5);
       let afterYear = after.substring(6, 10);
-      afterState = `${afterDay}-${afterMonth}-${afterYear}`;
+      afterState = `${afterYear}-${afterMonth}-${afterDay}`;
     }
     if (before) {
       let beforeDay = before.substring(0, 2);
       let beforeMonth = before.substring(3, 5);
       let beforeYear = before.substring(6, 10);
-      beforeState = `${beforeDay}-${beforeMonth}-${beforeYear}`;
+      beforeState = `${beforeYear}-${beforeMonth}-${beforeDay}`;
     }
 
     this.state = {
@@ -32,7 +30,8 @@ class MenuBar extends Component{
       before: beforeState,
       lat: parsedUrl.searchParams.get("lat"),
       lng: parsedUrl.searchParams.get("lng"),
-      rad: parsedUrl.searchParams.get("rad")
+      rad: parsedUrl.searchParams.get("rad"),
+      required: false
     }
   }
 
@@ -53,15 +52,15 @@ class MenuBar extends Component{
       path += `&maxMag=${this.state.maxMag}`
     }
     if (this.state.after) {
-      let day = this.state.after.substring(0, 2);
-      let month = this.state.after.substring(3, 5);
-      let year = this.state.after.substring(6, 10);
+      let day = this.state.after.substring(8, 10);
+      let month = this.state.after.substring(5, 7);
+      let year = this.state.after.substring(0, 4);
       path += `&after=${day}-${month}-${year}`
     }
     if (this.state.before) {
-      let day = this.state.before.substring(0, 2);
-      let month = this.state.before.substring(3, 5);
-      let year = this.state.before.substring(6, 10);
+      let day = this.state.before.substring(8, 10);
+      let month = this.state.before.substring(5, 7);
+      let year = this.state.before.substring(0, 4);
       path += `&before=${day}-${month}-${year}`
     }
     if (this.state.lat) {
@@ -95,38 +94,89 @@ class MenuBar extends Component{
 
   latChange = (e) => {
     this.setState({lat: e.target.value});
+    if (this.state.lng || this.state.lat || this.state.rad) {
+      this.setState({
+        required: true
+      })
+    } else if (!this.state.rad && !this.state.lng && !this.state.lat) {
+      this.setState({
+        required: false
+      })
+    }
   }
 
   lngChange = (e) => {
     this.setState({lng: e.target.value});
+    if (this.state.lng || this.state.lat || this.state.rad) {
+      this.setState({
+        required: true
+      })
+    } else if (!this.state.rad && !this.state.lng && !this.state.lat) {
+      this.setState({
+        required: false
+      })
+    }
   }
 
   radChange = (e) => {
     this.setState({rad: e.target.value});
+    if (this.state.lng || this.state.lat || this.state.rad) {
+      this.setState({
+        required: true
+      })
+    } else if (!this.state.rad && !this.state.lng && !this.state.lat) {
+      this.setState({
+        required: false
+      })
+    }
+  }
+
+  handleCheck = () => {
+    if (this.state.lng || this.state.lat || this.state.rad) {
+      this.setState({
+        required: true
+      })
+    } else if (!this.state.rad && !this.state.lng && !this.state.lat) {
+      this.setState({
+        required: false
+      })
+    }
   }
 
   render () {
+    let minLim = -1;
+    let maxLim = 10;
+    if (this.state.minMag) {
+      minLim = this.state.minMag
+    }
+    if (this.state.maxMag) {
+      maxLim = this.state.maxMag
+    }
     return(
-      <div className='sidebar'>
-        <p> {`Found ${this.props.searchCount} earthquakes matching these search parameters`} </p>
-        <h2>Search Parameters</h2>
-        <form onSubmit={this.handleSubmit}>
-          <label>Magnitudes greater than</label> <br/>
-          <input type='text' value={this.state.minMag} onChange={this.minMagChange} /> <br/>
-          <label>Magnitudes less than</label> <br/>
-          <input type='text' value={this.state.maxMag} onChange={this.maxMagChange} /> <br/>
-          <label>After</label> <br/>
-          <input type='text' value={this.state.after} placeholder='DD-MM-YYYY' onChange={this.afterChange} /> <br/>
-          <label>Before</label> <br/>
-          <input type='text' value={this.state.before} placeholder='DD-MM-YYYY' onChange={this.beforeChange} /> <br/>
-          <label>Latitude Position</label> <br/>
-          <input type='text' value={this.state.lat} onChange={this.latChange} /> <br/>
-          <label>Longitude Position</label> <br/>
-          <input type='text' value={this.state.lng} onChange={this.lngChange} /> <br/>
-          <label>Within (km) </label> <br/>
-          <input type='text' value={this.state.rad} onChange={this.radChange} /> <br/>
-          <input type='submit' value='Search' />
-        </form>
+      <div className='sidebar menubar'>
+        <div className='sidebar-content'>
+          <h2>Search Parameters</h2>
+          <form onSubmit={this.handleSubmit}>
+            <label>Magnitudes greater than</label> <br/>
+            <span className='value'><label>{this.state.minMag}</label></span>
+            <input type='range' value={this.state.minMag} min='-1' max= {maxLim} step='0.1' onChange={this.minMagChange} /> <br/>
+            <label>Magnitudes less than</label> <br/>
+            <span className='value'><label>{this.state.maxMag}</label></span>
+            <input type='range' value={this.state.maxMag} min={minLim} max= '10' step='0.1' onChange={this.maxMagChange} /> <br/>
+            <label>After</label> <br/>
+            <input type='date' value={this.state.after}   onChange={this.afterChange} /> <br/>
+            <label>Before</label> <br/>
+            <input type='date' value={this.state.before}  onChange={this.beforeChange} /> <br/>
+            <label><h3>Search Area</h3></label> <br/>
+            <label>Latitude Position</label> <br/>
+            <input type='text' value={this.state.lat} required={this.state.required} onChange={this.latChange} /> <br/>
+            <label>Longitude Position</label> <br/>
+            <input type='text' value={this.state.lng} required={this.state.required} onChange={this.lngChange} /> <br/>
+            <label>Within (km) </label> <br/>
+            <input type='text' value={this.state.rad} required={this.state.required} onChange={this.radChange} /> <br/>
+            <input class='submit' onClick={this.handleCheck} type='submit' value='Search' />
+          </form>
+        </div>
       </div>
     )
   }

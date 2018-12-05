@@ -2,9 +2,7 @@ import React, {Component} from 'react';
 import axios from 'axios';
 import ReactTooltip from "react-tooltip";
 import {
-  BrowserRouter,
-  Route,
-  Redirect
+  Route
 } from 'react-router-dom';
 
 import Map from './Map';
@@ -22,7 +20,8 @@ class Home extends Component {
     searchCount: 0,
     focused: '',
     done: false,
-    searched: false
+    searched: false,
+    noResults: false
   }
 
   componentDidMount () {
@@ -81,6 +80,17 @@ class Home extends Component {
       .then(() => {
         this.sortData()
       })
+      .then(() => {
+        if (this.state.searchCount === 0) {
+          this.setState({
+            noResults: true
+          })
+        } else {
+          this.setState({
+            noResults: false
+          })
+        }
+      })
       .then(() =>{
         this.setState({
           loading: false,
@@ -129,17 +139,14 @@ class Home extends Component {
     let afterLimit = Date.UTC(1900,0,1)
     let mag = 1;
     if (after) {
-      afterLimit = Date.UTC(after.substr(6,10),parseInt(after.substr(3,5))-1,after.substr(0,2));
-      console.log('---------------------------'+after)
+      afterLimit = Date.UTC(after.substr(6,10),parseInt(after.substr(3,5),10)-1,after.substr(0,2));
     }
     if (before) {
-      afterNow = Date.UTC(before.substr(6,10),parseInt(before.substr(3,5))-1,before.substr(0,2));
-      console.log('---------------------------'+before)
+      afterNow = Date.UTC(before.substr(6,10),parseInt(before.substr(3,5),10)-1,before.substr(0,2));
     }
-    if (minMag) {
-      mag = Math.exp(minMag-1)
-    }
-    afterNow -= 1000 * 60 * 60 * 24 * 10 * mag;
+    console.log('rad '+typeof rad)
+    console.log('mag '+mag)
+    afterNow -= 1000 * 60 * 60 * 24 * 30;
     if (afterNow < afterLimit) {
       afterNow = afterLimit;
       hitLimit = true;
@@ -160,6 +167,11 @@ class Home extends Component {
       let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
       this.getQuakeData(limitSearchTerms,afterSearch)
     } else {
+      if (this.state.searchCount) {
+        mag *= 100/this.state.searchCount
+      } else {
+        mag *= 100
+      }
       afterNow -= 1000 * 60 * 60 * 24 * 10 * mag;
       if (afterNow < afterLimit) {
         afterNow = afterLimit;
@@ -214,13 +226,14 @@ class Home extends Component {
       <div className='loading'> Searching Database </div>
     </LoadingWindow>)
     return(
-      <div className='app-container'>
+      <div className='home'>
         {this.state.loading? loadWindow : <div></div>}
         <Map
           focused={this.state.focused}
           markers={this.state.quakes}
           searchArea={this.state.searchArea}
           setFocused={this.setFocused}
+          noResults={this.state.noResults}
         />
         <Route exact
           path='/home'

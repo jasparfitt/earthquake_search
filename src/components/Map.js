@@ -13,7 +13,7 @@ import { withRouter } from 'react-router';
 class Map extends Component {
 
   state = {
-    center:[0,20],
+    center:[0,0],
     zoom: 1.9,
     focused: ''
   }
@@ -71,28 +71,22 @@ class Map extends Component {
 
   render() {
     let width = window.innerWidth * .8;
-    let height = window.innerHeight * 0.98;
+    let height = window.innerHeight * 1;
     let focusedMarker = (
       <Markers>
         <Marker key={'focused'} marker={this.props.focused}>
           <circle
+            className='focused'
             cx={0}
             cy={0}
-            r={8}
-            fill="#FF5722"
-            stroke="#dd3501"
-            strokeWidth="5"
           />
         </Marker>
       </Markers>
     )
-    let popUp = (
-      <div>
-
-      </div>
-    )
+    let noResultsPop = (<div className='no-results'> Sorry no earthquakes found matching these parameters</div>)
     return(
       <div className='map' id='map'>
+        {this.props.noResults? noResultsPop: ''}
         <button className='in' onClick={ this.handleZoomIn }>{ "+" }</button>
         <button className='out' onClick={ this.handleZoomOut }>{ "-" }</button>
         <ComposableMap width={width} height={height}>
@@ -100,9 +94,6 @@ class Map extends Component {
           <Geographies geography={ "/world-10m.json" }>
             {(geographies, projection) => geographies.map(geography => (
               <Geography
-                style={{default: { fill: "#666" },
-                        hover:   { fill: "#666" },
-                        pressed: { fill: "#666" },}}
                 key={ geography.id }
                 geography={ geography }
                 projection={ projection }
@@ -115,11 +106,6 @@ class Map extends Component {
                 key={marker.id}
                 marker={marker}
                 onClick={this.handleMarkerClick}
-                style={{
-                    default: { fill: "#FF5722" },
-                    hover: { fill: "#FFFFFF" },
-                    pressed: { fill: "#FF5722" },
-                  }}
               >
                 <circle
                   className={marker.id}
@@ -129,18 +115,11 @@ class Map extends Component {
                               ${marker.place} <br />
                               ${marker.date}-${marker.month+1}-${marker.year} <br />
                               click for more info`}
-                  r={5}
-                  style={{
-                    stroke: "#FF5722",
-                    strokeWidth: 3,
-                    opacity: 1,
-                  }}
                 />
               </Marker>
             ))}
           </Markers>
-
-          {this.props.focused? focusedMarker : ''}
+            {this.props.focused? focusedMarker : ''}
           </ZoomableGroup>
         </ComposableMap>
         <ReactTooltip multiline={true}/>

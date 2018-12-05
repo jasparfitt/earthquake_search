@@ -13,7 +13,7 @@ class App extends Component {
   render () {
     return (
       <BrowserRouter>
-        <div id='outside'>
+        <div id='app-container'>
           <Route exact path='/' render={() => <Redirect to='/home' />} />
           <Route path='/home' component={Home} />
         </div>
