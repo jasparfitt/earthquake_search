@@ -10,6 +10,10 @@ class MenuBar extends Component{
     let before = parsedUrl.searchParams.get("before");
     let afterState = '';
     let beforeState = '';
+    let sortBy = 'time-dsc';
+    if (parsedUrl.searchParams.get("sortBy")) {
+      sortBy = parsedUrl.searchParams.get("sortBy")
+    }
     if (after) {
       let afterDay = after.substring(0, 2);
       let afterMonth = after.substring(3, 5);
@@ -31,20 +35,26 @@ class MenuBar extends Component{
       lat: parsedUrl.searchParams.get("lat"),
       lng: parsedUrl.searchParams.get("lng"),
       rad: parsedUrl.searchParams.get("rad"),
-      required: false
+      required: false,
+      sortBy: sortBy
     }
   }
 
   componentDidMount() {
-    if ((this.state.minMag || this.state.maxMag || this.state.after || this.state.before || this.state.lat || this.state.lng || this.state.rad) && !this.props.searched) {
-      this.props.search(this.state.maxMag, this.state.minMag, this.state.after, this.state.before, this.state.lat, this.state.lng, this.state.rad)
+    console.log(this.props.match)
+    if (this.props.match.params.pageNum) {
+      this.props.savePageNum(parseInt(this.props.match.params.pageNum,10))
     }
+    if ((this.state.minMag || this.state.maxMag || this.state.after || this.state.before || this.state.lat || this.state.lng || this.state.rad) && !this.props.searched) {
+      this.props.search(this.state.maxMag, this.state.minMag, this.state.after, this.state.before, this.state.lat, this.state.lng, this.state.rad, this.props.match.params.pageNum, this.state.sortBy)
+    }
+    this.props.resetMap()
   }
 
   handleSubmit = (e) => {
     e.preventDefault()
-    this.props.search(this.state.maxMag,this.state.minMag,this.state.after,this.state.before,this.state.lat,this.state.lng,this.state.rad)
-    let path =`/home?`
+    this.props.search(this.state.maxMag,this.state.minMag,this.state.after,this.state.before,this.state.lat,this.state.lng,this.state.rad, 1,this.state.sortBy)
+    let path =`/home/1?sortBy=${this.state.sortBy}`
     if (this.state.minMag) {
       path += `&minMag=${this.state.minMag}`
     }
@@ -143,6 +153,12 @@ class MenuBar extends Component{
     }
   }
 
+  handleRadioChange = (e) => {
+    this.setState({
+      sortBy: e.target.value
+    })
+  }
+
   render () {
     let minLim = -1;
     let maxLim = 10;
@@ -156,9 +172,9 @@ class MenuBar extends Component{
       <div className='sidebar menubar'>
         <div className='sidebar-content'>
           <div className='page-control' style={{opacity: this.props.searched? '1' : '0'}}>
-            <button onclick={this.props.upPage} style={{opacity: (this.props.pageNum===1)? '1' : '0'}}><i className="fas fa-caret-left"></i></button>
-            <span>Page {this.props.pageNum}</span>
-            <button onclick={this.props.downPage} style={{opacity: this.props.last? '1' : '0'}}><i className="fas fa-caret-right"></i></button>
+            <button className='back-btn' onClick={this.props.pageDown} style={{opacity: (this.props.pageNum!==1)? '1' : '0'}}><i className="fas fa-caret-left"></i></button>
+            <div><span>Page {this.props.pageNum}</span></div>
+            <button className='next-btn' onClick={this.props.pageUp} style={{opacity: this.props.last? '0' : '1'}}><i className="fas fa-caret-right"></i></button>
           </div>
           <h2>Search Parameters</h2>
           <form onSubmit={this.handleSubmit}>
@@ -169,9 +185,9 @@ class MenuBar extends Component{
             <span className='value'><label>{this.state.maxMag}</label></span>
             <input type='range' value={this.state.maxMag} min={minLim} max= '10' step='0.1' onChange={this.maxMagChange} /> <br/>
             <label>After</label> <br/>
-            <input type='date' value={this.state.after}   onChange={this.afterChange} /> <br/>
+            <input type='date' value={this.state.after} min='1900-01-01' max={new Date(Date.now()).toISOString().substr(0,10)} onChange={this.afterChange} /> <br/>
             <label>Before</label> <br/>
-            <input type='date' value={this.state.before}  onChange={this.beforeChange} /> <br/>
+            <input type='date' value={this.state.before} min='1900-01-01' max={new Date(Date.now()).toISOString().substr(0,10)} onChange={this.beforeChange} /> <br/>
             <label><h3>Search Area</h3></label> <br/>
             <label>Latitude Position</label> <br/>
             <input type='number' value={this.state.lat} min='-90' max='90' required={this.state.required} onChange={this.latChange} /> <br/>
@@ -179,6 +195,47 @@ class MenuBar extends Component{
             <input type='number' value={this.state.lng} min='-180' max='180' required={this.state.required} onChange={this.lngChange} /> <br/>
             <label>Within (km) </label> <br/>
             <input type='number' value={this.state.rad} min='0' required={this.state.required} onChange={this.radChange} /> <br/>
+            <label><h3>Sort by</h3></label> <br/>
+            <input
+              className='sort'
+              type='radio'
+              name='sortCheck'
+              id='time-dsc'
+              value='time-dsc'
+              checked={this.state.sortBy==='time-dsc'}
+              onChange={this.handleRadioChange}
+            />
+            <label for='time-dsc' className='sortName'>Time (newest - oldest)</label><br/>
+            <input
+              className='sort'
+              type='radio'
+              name='sortCheck'
+              id='time-asc'
+              value='time-asc'
+              checked={this.state.sortBy==='time-asc'}
+              onChange={this.handleRadioChange}
+            />
+            <label for='time-asc' className='sortName'>Time (oldest - newest)</label><br/>
+            <input
+              className='sort'
+              type='radio'
+              name='sortCheck'
+              id='mag-dsc'
+              value='magnitude-dsc'
+              checked={this.state.sortBy==='magnitude-dsc'}
+              onChange={this.handleRadioChange}
+            />
+            <label for='magnitude-dsc' className='sortName'>Magnitude (largest - smallest)</label><br/>
+            <input
+              className='sort'
+              type='radio'
+              name='sortCheck'
+              id='mag-asc'
+              value='magnitude-asc'
+              checked={this.state.sortBy==='magnitude-asc'}
+              onChange={this.handleRadioChange}
+            />
+            <label for='magnitude-asc' className='sortName'>Magnitude (largest - smallest)</label><br/>
             <input className='submit' onClick={this.handleCheck} type='submit' value='Search' />
           </form>
         </div>

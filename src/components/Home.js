@@ -79,7 +79,7 @@ class Home extends Component {
 
   // Request JSON data based on current search terms
   getQuakeData = (searchTerms,afterSearch) => {
-    let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=100`;
+    let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=100`;
     console.log(fullRequest + searchTerms + afterSearch)
       axios.get(fullRequest + searchTerms + afterSearch)
       .then(response => {
@@ -111,8 +111,17 @@ class Home extends Component {
   }
 
   // Create the query string without starttime parameter to send to API
-  createLimitedSearchString = (maxMag, minMag, after, before, lat, lng, rad) => {
-    let limitSearchTerms = ``;
+  createLimitedSearchString = (maxMag, minMag, after, before, lat, lng, rad, pageNum, sortBy) => {
+    let limitSearchTerms = `&offset=${1 + (pageNum - 0) * 100}`;
+    if (sortBy === 'time-asc') {
+      limitSearchTerms += '&orderby=time-asc'
+    } else if (sortBy === 'time-dsc') {
+      limitSearchTerms += '&orderby=time'
+    } else if (sortBy === 'magnitude-asc') {
+      limitSearchTerms += '&orderby=magnitude-asc'
+    } else if (sortBy === 'magnitude-dsc') {
+      limitSearchTerms += '&orderby=magnitude'
+    }
     if (maxMag) {
       limitSearchTerms += `&maxmagnitude=${maxMag}`
     }
@@ -135,7 +144,7 @@ class Home extends Component {
   }
 
   // Function called when form is submitted, finds 100 datum that match the search criteria then sorts the data for display on the map
-  search = (maxMag, minMag, after, before, lat, lng, rad) => {
+  search = (maxMag, minMag, after, before, lat, lng, rad, pageNum, sortBy) => {
     this.setState({
       quakes: [],
       loading: true,
@@ -150,7 +159,7 @@ class Home extends Component {
         searchCenter: ''
       })
     }
-    let limitSearchTerms = this.createLimitedSearchString(maxMag, minMag, after, before, lat, lng, rad);
+    let limitSearchTerms = this.createLimitedSearchString(maxMag, minMag, after, before, lat, lng, rad, pageNum, sortBy);
     let hitLimit = false;
     let afterNow = Date.now();
     let afterLimit = Date.UTC(1900,0,1)
@@ -252,24 +261,66 @@ class Home extends Component {
     })
   }
 
+  parseURL = (parsedUrl) => {
+    let after = parsedUrl.searchParams.get("after");
+    let before = parsedUrl.searchParams.get("before");
+    let afterState = '';
+    let beforeState = '';
+    if (after) {
+      let afterDay = after.substring(0, 2);
+      let afterMonth = after.substring(3, 5);
+      let afterYear = after.substring(6, 10);
+      afterState = `${afterYear}-${afterMonth}-${afterDay}`;
+    }
+    if (before) {
+      let beforeDay = before.substring(0, 2);
+      let beforeMonth = before.substring(3, 5);
+      let beforeYear = before.substring(6, 10);
+      beforeState = `${beforeYear}-${beforeMonth}-${beforeDay}`;
+    }
+
+    return({
+      minMag: parsedUrl.searchParams.get("minMag"),
+      maxMag: parsedUrl.searchParams.get("maxMag"),
+      after: afterState,
+      before: beforeState,
+      lat: parsedUrl.searchParams.get("lat"),
+      lng: parsedUrl.searchParams.get("lng"),
+      rad: parsedUrl.searchParams.get("rad"),
+    })
+  }
+
   // move to next page of results
   pageUp = () => {
-
+    if (!this.state.last) {
+      this.setState(prevState => {
+        const { history: { push } } = this.props;
+        push(`/home/${prevState.pageNum + 1}`+this.props.history.location.search);
+        let param = this.parseURL(new URL(window.location.href));
+        this.search(param.maxMag, param.minMag, param.after, param.before, param.lat, param.lng, param.rad, prevState.pageNum + 1)
+        return({
+          pageNum: prevState.pageNum + 1
+        })
+      })
+    }
   }
 
   // move to previous page of results
   pageDown = () => {
-
+    if (this.state.pageNum > 1) {
+      this.setState(prevState => {
+        const { history: { push } } = this.props;
+        push(`/home/${prevState.pageNum - 1}`+this.props.history.location.search);
+        let param = this.parseURL(new URL(window.location.href));
+        this.search(param.maxMag, param.minMag, param.after, param.before, param.lat, param.lng, param.rad, prevState.pageNum - 1)
+        return({
+          pageNum: prevState.pageNum - 1
+        })
+      })
+    }
   }
 
-  // ------ These functions handle the map functionality zoom, pan, click -----
-  // Removes the focused state for when going back to search bar
-  removeFocused = () => {
-    this.setState({
-      focused: ''
-    })
-  }
-
+  // ------ These functions handle the map functionality zoom, pan, click ----
   // Sets the focused state for when a marker is clicked
   setFocused = marker => {
     this.setState({
@@ -329,11 +380,19 @@ class Home extends Component {
     })
   }
 
-  // resets the zoom and center states for when going back to search bar
+  // resets the zoom and center states for when going back to search bar and removes focused marker
   resetMap = () => {
     this.setState({
       zoom: 1.9,
-      center: [0, 0]
+      center: [0, 0],
+      focused: ''
+    })
+  }
+
+  // sets the page number if url is provided with one
+  savePageNum = pageNum => {
+    this.setState({
+      pageNum: pageNum
     })
   }
 
@@ -380,6 +439,23 @@ class Home extends Component {
           searchCenter={this.state.searchCenter}
         />
         <Route exact
+          path='/home/:pageNum'
+          render={routeProps => (
+            <MenuBar
+              {...routeProps}
+              search={this.search}
+              searchCount={this.state.searchCount}
+              searched={this.state.searched}
+              last={this.state.last}
+              pageNum={this.state.pageNum}
+              pageUp={this.pageUp}
+              pageDown={this.pageDown}
+              resetMap={this.resetMap}
+              savePageNum={this.savePageNum}
+            />
+          )}
+        />
+        <Route exact
           path='/home'
           render={routeProps => (
             <MenuBar
@@ -387,11 +463,17 @@ class Home extends Component {
               search={this.search}
               searchCount={this.state.searchCount}
               searched={this.state.searched}
+              last={this.state.last}
+              pageNum={this.state.pageNum}
+              pageUp={this.pageUp}
+              pageDown={this.pageDown}
+              resetMap={this.resetMap}
+              savePageNum={this.savePageNum}
             />
           )}
         />
         <Route
-          path='/home/:id'
+          path='/home/marker/:id'
           render={routeProps => {
             if (!this.state.quakes.length && !this.state.loading) {
               this.getOneQuake(routeProps.match.params.id)
@@ -403,6 +485,7 @@ class Home extends Component {
                 removeFocused={this.removeFocused}
                 queryString={this.state.queryString}
                 resetMap={this.resetMap}
+                pageNum={this.state.pageNum}
               />
             )
           }}

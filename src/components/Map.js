@@ -17,10 +17,11 @@ class Map extends Component {
   }
 
   handleMarkerClick = (marker) => {
-    this.props.markerZoomAndPan(marker)
     const { history: { push } } = this.props;
+    console.log(this.props.history)
     this.props.saveSearch(this.props.history.location.search)
-    push(`/home/${marker.id}`);
+    this.props.markerZoomAndPan(marker)
+    push(`/home/marker/${marker.id}`);
     this.props.setFocused(marker);
   }
 

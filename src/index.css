@@ -218,6 +218,10 @@ button {
   font-size: 2rem;
 }
 
+.sort {
+  margin: 0.5em 0;
+}
+
 .error-popup button{
   margin: 0 auto;
   margin-top: 1em;
@@ -227,4 +231,21 @@ button {
 .error-popup i {
   margin: .5em auto;
   font-size: 1.5em;
+}
+
+.page-control {
+  width: 60%;
+  display: flex;
+  margin: 0 auto;
+}
+
+.page-control button {
+  margin: 0;
+}
+
+.page-control div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: auto;
 }
