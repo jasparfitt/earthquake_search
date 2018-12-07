@@ -155,6 +155,11 @@ class MenuBar extends Component{
     return(
       <div className='sidebar menubar'>
         <div className='sidebar-content'>
+          <div className='page-control' style={{opacity: this.props.searched? '1' : '0'}}>
+            <button onclick={this.props.upPage} style={{opacity: (this.props.pageNum===1)? '1' : '0'}}><i className="fas fa-caret-left"></i></button>
+            <span>Page {this.props.pageNum}</span>
+            <button onclick={this.props.downPage} style={{opacity: this.props.last? '1' : '0'}}><i className="fas fa-caret-right"></i></button>
+          </div>
           <h2>Search Parameters</h2>
           <form onSubmit={this.handleSubmit}>
             <label>Magnitudes greater than</label> <br/>
@@ -174,7 +179,7 @@ class MenuBar extends Component{
             <input type='number' value={this.state.lng} min='-180' max='180' required={this.state.required} onChange={this.lngChange} /> <br/>
             <label>Within (km) </label> <br/>
             <input type='number' value={this.state.rad} min='0' required={this.state.required} onChange={this.radChange} /> <br/>
-            <input class='submit' onClick={this.handleCheck} type='submit' value='Search' />
+            <input className='submit' onClick={this.handleCheck} type='submit' value='Search' />
           </form>
         </div>
       </div>

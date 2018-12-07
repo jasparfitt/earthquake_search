@@ -28,17 +28,24 @@ class Map extends Component {
     let width = window.innerWidth * .8;
     let height = window.innerHeight * 1;
     let focusedMarker = (
-      <Markers>
-        <Marker key={'focused'} marker={this.props.focused}>
+        <Marker key='focused' marker={this.props.focused}>
           <circle
             className='focused'
             cx={0}
             cy={0}
           />
         </Marker>
-      </Markers>
     )
-    let noResultsPop = (<div className='no-results'><div className='no-results-text'><i class="fas fa-exclamation-triangle"></i><br/>Sorry, no earthquakes were found matching these parameters</div></div>)
+    let searchCenter = (
+      <Marker key='searchCenter' marker={this.props.searchCenter}>
+        <circle
+          className='searchCenter'
+          cx={0}
+          cy={0}
+        />
+      </Marker>
+    )
+    let noResultsPop = (<div className='no-results'><div className='no-results-text'><i className="fas fa-exclamation-triangle"></i><br/>Sorry, no earthquakes were found matching these parameters</div></div>)
     return(
       <div className='map' id='map'>
         {this.props.noResults? noResultsPop: ''}
@@ -55,6 +62,9 @@ class Map extends Component {
                 />
             ))}
           </Geographies>
+          <Markers>
+            {this.props.searchCenter? searchCenter : ''}
+          </Markers>
           <Markers>
             {this.props.markers.map((marker, i) => (
               <Marker
@@ -74,7 +84,9 @@ class Map extends Component {
               </Marker>
             ))}
           </Markers>
+          <Markers>
             {this.props.focused? focusedMarker : ''}
+          </Markers>
           </ZoomableGroup>
         </ComposableMap>
         <ReactTooltip multiline={true}/>
