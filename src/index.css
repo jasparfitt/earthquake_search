@@ -9,25 +9,91 @@ body {
 #root {
   height: 100vh;
 }
+
 h3 {
   margin: 0;
   margin-top: 0.5em;
   margin-bottom: -0.5em;
 }
-.app-container {
+
+#app-container {
+  display: grid;
   width: 100%;
   height: 100vh;
+  grid-template-rows: 100px 1fr;
+}
+.disabled {
+  opacity: 0.3;
+}
+
+.disabled .disabled {
+  opacity: 1;
+}
+
+.page-control.disabled button:hover {
+  background-color: #FF7944;
+}
+
+.page-control.disabled button:active {
+  background-color: #FF7944;
+}
+
+.page-control.disabled button:focus {
+  outline: none;
+}
+
+.page-control .disabled:hover {
+  background-color: #FF7944;
+}
+
+.page-control .disabled:active {
+  background-color: #FF7944;
+}
+
+.page-control .disabled:focus {
+  outline: none;
 }
 
 .home {
+  grid-row: 2;
   display: grid;
   grid-template-columns: 4fr 1fr;
   width: 100%;
-  height: 100vh;
+}
+
+h1 {
+  font-family: 'Unlock', cursive;
+  margin: auto 3em;
+  font-size: 2.5em;
+}
+
+.header {
+  background: #34495e;
+  color: #FF7944;
+  border-bottom: #FF7944 solid 4px;
+  grid-row: 1;
+  display: flex;
+}
+
+.header a {
+  padding: 0 2em;
+  font-size: 1.25em;
+  text-decoration: none;
+  color: #FF7944;
+  display: flex;
+}
+
+.header a div {
+  margin: auto;
+}
+
+.header a.selected {
+  background: #FF7944;
+  color: #34495e;
 }
 
 .sidebar {
-  background: #34495e;
+  background: #455a6f;
   color: white;
   grid-column: 2;
   padding: 2em 3em;

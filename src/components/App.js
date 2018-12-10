@@ -2,11 +2,13 @@ import React, {Component} from 'react';
 import {
   BrowserRouter,
   Route,
-  Redirect
+  Redirect,
+  Switch
 } from 'react-router-dom';
 
 
 import Home from './Home'
+import Header from './Header'
 
 class App extends Component {
 
@@ -14,8 +16,13 @@ class App extends Component {
     return (
       <BrowserRouter>
         <div id='app-container'>
-          <Route exact path='/' render={() => <Redirect to='/home' />} />
-          <Route path='/home' component={Home} />
+          <Header/>
+          <Switch>
+            <Route exact path='/' render={() => <Redirect to='/home' />} />
+            <Route path='/home' component={Home} />
+            <Route path='/about' component={About} />
+            <Route component={NotFound} />
+          </Switch>
         </div>
       </BrowserRouter>
     )

@@ -15,7 +15,6 @@ class InfoBar extends Component {
     let quake = this.props.quakes.find(element => {
       return element.id === this.props.match.params.id
     })
-    console.log(quake)
     if (quake) {
       let feltText = (<div>and was felt by {quake.felt} people*.</div>);
       let feltAnnotation = (<div className='annotation'><span>* Based on data collected from <a href='https://earthquake.usgs.gov/data/dyfi/'>Did You Feel It?</a></span></div>)

@@ -41,7 +41,6 @@ class MenuBar extends Component{
   }
 
   componentDidMount() {
-    console.log(this.props.match)
     if (this.props.match.params.pageNum) {
       this.props.savePageNum(parseInt(this.props.match.params.pageNum,10))
     }
@@ -53,8 +52,10 @@ class MenuBar extends Component{
 
   handleSubmit = (e) => {
     e.preventDefault()
+    this.props.resetMap();
+    this.props.resetPages();
     this.props.search(this.state.maxMag,this.state.minMag,this.state.after,this.state.before,this.state.lat,this.state.lng,this.state.rad, 1,this.state.sortBy)
-    let path =`/home/1?sortBy=${this.state.sortBy}`
+    let path =`/home/1?&sortBy=${this.state.sortBy}`
     if (this.state.minMag) {
       path += `&minMag=${this.state.minMag}`
     }
@@ -171,10 +172,10 @@ class MenuBar extends Component{
     return(
       <div className='sidebar menubar'>
         <div className='sidebar-content'>
-          <div className='page-control' style={{opacity: this.props.searched? '1' : '0'}}>
-            <button className='back-btn' onClick={this.props.pageDown} style={{opacity: (this.props.pageNum!==1)? '1' : '0'}}><i className="fas fa-caret-left"></i></button>
+          <div className={this.props.searched? 'page-control' : 'page-control disabled'} >
+            <button className={(this.props.pageNum!==1)? 'back-btn' : 'back-btn disabled'} onClick={this.props.pageDown} ><i className="fas fa-caret-left"></i></button>
             <div><span>Page {this.props.pageNum}</span></div>
-            <button className='next-btn' onClick={this.props.pageUp} style={{opacity: this.props.last? '0' : '1'}}><i className="fas fa-caret-right"></i></button>
+            <button className={this.props.last? 'next-btn disabled': 'next-btn'} onClick={this.props.pageUp} ><i className="fas fa-caret-right"></i></button>
           </div>
           <h2>Search Parameters</h2>
           <form onSubmit={this.handleSubmit}>
@@ -235,7 +236,7 @@ class MenuBar extends Component{
               checked={this.state.sortBy==='magnitude-asc'}
               onChange={this.handleRadioChange}
             />
-            <label for='magnitude-asc' className='sortName'>Magnitude (largest - smallest)</label><br/>
+          <label for='magnitude-asc' className='sortName'>Magnitude (smallest - largest)</label><br/>
             <input className='submit' onClick={this.handleCheck} type='submit' value='Search' />
           </form>
         </div>

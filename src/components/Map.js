@@ -18,7 +18,6 @@ class Map extends Component {
 
   handleMarkerClick = (marker) => {
     const { history: { push } } = this.props;
-    console.log(this.props.history)
     this.props.saveSearch(this.props.history.location.search)
     this.props.markerZoomAndPan(marker)
     push(`/home/marker/${marker.id}`);
@@ -27,7 +26,7 @@ class Map extends Component {
 
   render() {
     let width = window.innerWidth * .8;
-    let height = window.innerHeight * 1;
+    let height = window.innerHeight - 100;
     let focusedMarker = (
         <Marker key='focused' marker={this.props.focused}>
           <circle

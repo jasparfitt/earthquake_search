@@ -17,14 +17,14 @@ class Home extends Component {
     quakes: [],
     searchCenter: '',
     loading: false,
-    searchCount: 0,
+    searchCount: 'begin',
     focused: '',
     done: false,
     searched: false,
     noResults: false,
     queryString: '',
     center:[0,0],
-    zoom: 1.9,
+    zoom: 1.6,
     error: false,
     pageNum: 1,
     last: false
@@ -72,7 +72,8 @@ class Home extends Component {
       .catch((error) => {
         this.setState({
           loading: false,
-          error: true
+          error: true,
+          done: true
         })
       })
   }
@@ -80,7 +81,6 @@ class Home extends Component {
   // Request JSON data based on current search terms
   getQuakeData = (searchTerms,afterSearch) => {
     let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=100`;
-    console.log(fullRequest + searchTerms + afterSearch)
       axios.get(fullRequest + searchTerms + afterSearch)
       .then(response => {
         this.setState({
@@ -93,7 +93,7 @@ class Home extends Component {
       .then(() =>{
         this.setState({
           loading: false,
-          searchCount: 0,
+          searchCount: 'begin',
           done: false
         })
         setTimeout(() => {
@@ -105,14 +105,14 @@ class Home extends Component {
           loading: false,
           error: true,
           done: false,
-          searchCount: 0
+          searchCount: 'begin'
         })
       })
   }
 
   // Create the query string without starttime parameter to send to API
-  createLimitedSearchString = (maxMag, minMag, after, before, lat, lng, rad, pageNum, sortBy) => {
-    let limitSearchTerms = `&offset=${1 + (pageNum - 0) * 100}`;
+  createSearchString = (maxMag, minMag, after, before, lat, lng, rad, pageNum, sortBy) => {
+    let limitSearchTerms = `&offset=${1 + (pageNum - 1) * 100}`;
     if (sortBy === 'time-asc') {
       limitSearchTerms += '&orderby=time-asc'
     } else if (sortBy === 'time-dsc') {
@@ -122,13 +122,16 @@ class Home extends Component {
     } else if (sortBy === 'magnitude-dsc') {
       limitSearchTerms += '&orderby=magnitude'
     }
-    if (maxMag) {
+    if (after && sortBy!=='time-dsc') {
+      limitSearchTerms += `&starttime=${after}`
+    }
+    if (maxMag && sortBy!=='magnitude-asc') {
       limitSearchTerms += `&maxmagnitude=${maxMag}`
     }
-    if (minMag) {
+    if (minMag && sortBy!=='magnitude-dsc') {
       limitSearchTerms += `&minmagnitude=${minMag}`
     }
-    if (before) {
+    if (before && sortBy!=='time-asc') {
       limitSearchTerms += `&endtime=${before}`
     }
     if (lat) {
@@ -159,68 +162,148 @@ class Home extends Component {
         searchCenter: ''
       })
     }
-    let limitSearchTerms = this.createLimitedSearchString(maxMag, minMag, after, before, lat, lng, rad, pageNum, sortBy);
+    let searchTerms = this.createSearchString(maxMag, minMag, after, before, lat, lng, rad, pageNum, sortBy);
     let hitLimit = false;
-    let afterNow = Date.now();
-    let afterLimit = Date.UTC(1900,0,1)
-    let mag = 1;
-    if (after) {
-      console.log('after'+after)
-      afterLimit = Date.UTC(parseInt(after.substr(0,4),10),parseInt(after.substr(5,7),10)-1,parseInt(after.substr(8,10),10));
-      console.log('after' +new Date(afterLimit))
-    }
-    if (before) {
-      console.log('before'+before)
-      afterNow = Date.UTC(parseInt(before.substr(0,4),10),parseInt(before.substr(5,7),10)-1,parseInt(before.substr(8,10),10));
-      console.log('before' +new Date(afterNow))
-    }
-    afterNow -= 1000 * 60 * 60 * 24 * 30;
-    if (afterNow < afterLimit) {
-      afterNow = afterLimit;
-      hitLimit = true;
-    }
-    let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
-    this.getSearchCount(limitSearchTerms,afterSearch);
-    this.searchFor100(afterNow,afterLimit,hitLimit,limitSearchTerms, mag)
-  }
-
-  //  continually searchs API furthur back in time until 100 results are found or it hits the 'after' limit
-  searchFor100 = (afterNow, afterLimit, hitLimit, limitSearchTerms, mag) => {
-  if (!this.state.done) {
-      setTimeout(() => {this.searchFor100(afterNow, afterLimit, hitLimit, limitSearchTerms, mag)}, 100);
-  } else {
-    console.log('length  ' + this.state.searchCount)
-    if (this.state.searchCount >= 100 || hitLimit) {
-      if (this.state.searchCount === 0) {
-        this.setState({
-          noResults: true,
-          searched: false,
-          loading: false,
-          done:false
-        })
-      } else {
-        this.setState({
-          noResults: false,
-          done:false
-        })
-        console.log('start time '+ new Date(afterNow).toISOString().substr(0,10))
-        let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
-        this.getQuakeData(limitSearchTerms,afterSearch)
+    let start = ''
+    let limit = ''
+    let increment = ''
+    let createLimitTerm = ''
+    if (sortBy === 'time-dsc') {
+      start = Date.now();
+      limit = Date.UTC(1900,0,1);
+      if (before) {
+        start = Date.UTC(parseInt(before.substr(0,4),10),parseInt(before.substr(5,7),10)-1,parseInt(before.substr(8,10),10));
       }
-    } else {
-      if (this.state.searchCount) {
-        mag *= 100/this.state.searchCount
-      } else {
-        mag *= 100
+      if (after) {
+        limit = Date.UTC(parseInt(after.substr(0,4),10),parseInt(after.substr(5,7),10)-1,parseInt(after.substr(8,10),10));
       }
-      afterNow -= 1000 * 60 * 60 * 24 * 10 * mag;
-      if (afterNow < afterLimit) {
-        afterNow = afterLimit;
+      increment = -1000 * 60 * 60 * 24 * 10;
+      createLimitTerm = this.createTimeLimit
+    } else if (sortBy === 'time-asc') {
+      start = Date.UTC(1900,0,1);
+      limit = Date.now();
+      if (after) {
+        start = Date.UTC(parseInt(after.substr(0,4),10),parseInt(after.substr(5,7),10)-1,parseInt(after.substr(8,10),10));
+      }
+      if (before) {
+        limit = Date.UTC(parseInt(before.substr(0,4),10),parseInt(before.substr(5,7),10)-1,parseInt(before.substr(8,10),10));
+      }
+      increment = 1000 * 60 * 60 * 24 * 10;
+      createLimitTerm = this.createTimeLimit
+    } else if (sortBy === 'magnitude-dsc') {
+      start = Math.pow(10, -10);
+      limit = Math.pow(10, 1);
+      if (maxMag) {
+        start = Math.pow(10, -1 * parseFloat(maxMag, 10));
+      }
+      if (minMag) {
+        limit = Math.pow(10, -1 * parseFloat(minMag, 10));
+      }
+      increment = 0.0000001;
+      createLimitTerm = this.createMagLimit
+    } else if (sortBy === 'magnitude-asc') {
+      start = Math.pow(10, 1);
+      limit = Math.pow(10, -10);
+      if (minMag) {
+        start = Math.pow(10, -1 * parseFloat(minMag, 10));
+        console.log(start)
+      }
+      console.log(start)
+      if (maxMag) {
+        limit = Math.pow(10, -1 * parseFloat(maxMag, 10));
+      }
+      increment = -0.0000001;
+      createLimitTerm = this.createMagLimit
+    }
+    let variable = start + increment;
+    if (increment > 0) {
+      if ((variable) > (limit)) {
+        variable = limit;
         hitLimit = true;
       }
-      let afterSearch = `&starttime=${new Date(afterNow).toISOString().substr(0,10)}`
-      this.getSearchCount(limitSearchTerms,afterSearch);
-      this.searchFor100(afterNow, afterLimit, hitLimit, limitSearchTerms, mag);
+    } else if (increment < 0) {
+      if ((variable) < (limit)) {
+        variable = limit;
+        hitLimit = true;
+      }
+    }
+    let limitTerm = createLimitTerm(increment, variable)
+    this.getSearchCount(searchTerms, limitTerm);
+    this.searchFor100(start, increment, limit, searchTerms, hitLimit, createLimitTerm, variable)
+  }
+
+  // creates search term for magnitude limits
+  createMagLimit = (increment, variable) => {
+    if (increment < 0) {
+      return `&maxmagnitude=${(-Math.log10(variable)).toFixed(2)}`
+    } else if (increment > 0) {
+      return `&minmagnitude=${(-Math.log10(variable)).toFixed(2)}`
+    }
+  }
+
+  // creates search term for time limits
+  createTimeLimit = (increment, variable) => {
+    if (increment < 0) {
+      return `&starttime=${new Date(variable).toISOString().substr(0,10)}`
+    } else if (increment > 0) {
+      return `&endtime=${new Date(variable).toISOString().substr(0,10)}`
+    }
+  }
+
+  //  continually searchs API based on sort by until 100 results are found
+  searchFor100 = (start, increment, limit, searchTerms, hitLimit, createLimitTerm, variable) => {
+    if (this.state.error) {
+
+    } else if (!this.state.done) {
+      setTimeout(() => {this.searchFor100(start, increment, limit, searchTerms, hitLimit, createLimitTerm, variable)}, 100);
+    } else {
+      if (this.state.searchCount >= this.state.pageNum * 100 || hitLimit) {
+        if (this.state.searchCount === 0) {
+          this.setState({
+            noResults: true,
+            searched: false,
+            loading: false,
+            done: false
+          })
+        } else {
+          if (hitLimit && this.state.searchCount <= this.state.pageNum * 100) {
+            this.setState({
+              last: true
+            })
+          } else {
+            this.setState({
+              last: false
+            })
+          }
+          this.setState({
+            noResults: false,
+            done:false
+          })
+          let limitTerm = createLimitTerm(increment, variable)
+          this.getQuakeData(searchTerms, limitTerm)
+        }
+      } else {
+        if (this.state.searchCount) {
+          increment *= this.state.pageNum * 100 / this.state.searchCount
+          variable = start + increment;
+        } else {
+          increment *= this.state.pageNum * 100
+          variable = start + increment;
+        }
+        if (increment > 0) {
+          if ((variable) > (limit)) {
+            variable = limit;
+            hitLimit = true;
+          }
+        } else if (increment < 0) {
+          if ((variable) < (limit)) {
+            variable = limit;
+            hitLimit = true;
+          }
+        }
+        let limitTerm = createLimitTerm(increment, variable)
+        this.getSearchCount(searchTerms, limitTerm);
+        this.searchFor100(start, increment, limit, searchTerms, hitLimit, createLimitTerm, variable);
       }
     }
   }
@@ -261,6 +344,7 @@ class Home extends Component {
     })
   }
 
+  // extract the search criteria from a given URL
   parseURL = (parsedUrl) => {
     let after = parsedUrl.searchParams.get("after");
     let before = parsedUrl.searchParams.get("before");
@@ -280,6 +364,7 @@ class Home extends Component {
     }
 
     return({
+      sortBy: parsedUrl.searchParams.get('sortBy'),
       minMag: parsedUrl.searchParams.get("minMag"),
       maxMag: parsedUrl.searchParams.get("maxMag"),
       after: afterState,
@@ -297,7 +382,7 @@ class Home extends Component {
         const { history: { push } } = this.props;
         push(`/home/${prevState.pageNum + 1}`+this.props.history.location.search);
         let param = this.parseURL(new URL(window.location.href));
-        this.search(param.maxMag, param.minMag, param.after, param.before, param.lat, param.lng, param.rad, prevState.pageNum + 1)
+        this.search(param.maxMag, param.minMag, param.after, param.before, param.lat, param.lng, param.rad, prevState.pageNum + 1, param.sortBy)
         return({
           pageNum: prevState.pageNum + 1
         })
@@ -312,7 +397,7 @@ class Home extends Component {
         const { history: { push } } = this.props;
         push(`/home/${prevState.pageNum - 1}`+this.props.history.location.search);
         let param = this.parseURL(new URL(window.location.href));
-        this.search(param.maxMag, param.minMag, param.after, param.before, param.lat, param.lng, param.rad, prevState.pageNum - 1)
+        this.search(param.maxMag, param.minMag, param.after, param.before, param.lat, param.lng, param.rad, prevState.pageNum - 1, param.sortBy)
         return({
           pageNum: prevState.pageNum - 1
         })
@@ -383,9 +468,16 @@ class Home extends Component {
   // resets the zoom and center states for when going back to search bar and removes focused marker
   resetMap = () => {
     this.setState({
-      zoom: 1.9,
+      zoom: 1.6,
       center: [0, 0],
       focused: ''
+    })
+  }
+
+  // resets page number to 1
+  resetPages = () => {
+    this.setState({
+      pageNum: 1
     })
   }
 
@@ -452,6 +544,7 @@ class Home extends Component {
               pageDown={this.pageDown}
               resetMap={this.resetMap}
               savePageNum={this.savePageNum}
+              resetPages={this.resetPages}
             />
           )}
         />
@@ -469,6 +562,7 @@ class Home extends Component {
               pageDown={this.pageDown}
               resetMap={this.resetMap}
               savePageNum={this.savePageNum}
+              resetPages={this.resetPages}
             />
           )}
         />
