@@ -58,11 +58,13 @@ class Home extends Component {
       done: false
     })
     let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/count?`;
+    console.log(fullRequest + searchTerms + afterSearch)
       axios.get(fullRequest + searchTerms + afterSearch)
       .then(response => {
         this.setState({
           searchCount: response.data
         })
+        console.log(response.data)
       })
       .then(() =>{
         this.setState({
@@ -81,6 +83,7 @@ class Home extends Component {
   // Request JSON data based on current search terms
   getQuakeData = (searchTerms,afterSearch) => {
     let fullRequest = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=100`;
+    console.log(fullRequest + searchTerms + afterSearch)
       axios.get(fullRequest + searchTerms + afterSearch)
       .then(response => {
         this.setState({

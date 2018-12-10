@@ -24,6 +24,7 @@ h3 {
 }
 .disabled {
   opacity: 0.3;
+  cursor: default;
 }
 
 .disabled .disabled {
@@ -63,12 +64,13 @@ h3 {
 
 h1 {
   font-family: 'Unlock', cursive;
-  margin: auto 3em;
+  margin: auto 0;
+  margin-right: 3em;
   font-size: 2.5em;
 }
 
 .header {
-  background: #34495e;
+  background: #455a6f;
   color: #FF7944;
   border-bottom: #FF7944 solid 4px;
   grid-row: 1;
@@ -81,6 +83,7 @@ h1 {
   text-decoration: none;
   color: #FF7944;
   display: flex;
+  font-weight: bold;
 }
 
 .header a div {
@@ -92,8 +95,28 @@ h1 {
   color: #34495e;
 }
 
+.header-margin {
+  display: flex;
+}
+
+.margin {
+  margin: 0 300px;
+}
+
+.not-found {
+  font-size: 2em;
+  width: 100%;
+  background: #34495e;
+  color: white;
+}
+
+.about {
+  background: #34495e;
+  color: white;
+}
+
 .sidebar {
-  background: #455a6f;
+  background: #34495e;
   color: white;
   grid-column: 2;
   padding: 2em 3em;
@@ -114,11 +137,11 @@ h1 {
 }
 
 a {
-  color: gray;
+  color: #FF7944;
 }
 
 .rsm-geographies {
-    fill: white;
+  fill: white;
 }
 
 .rsm-geographies path:focus,
@@ -131,6 +154,7 @@ a {
   stroke: #FF5722;
   stroke-width: 3;
   r: 5;
+  cursor: pointer;
 }
 
 .rsm-marker circle:hover {
@@ -142,13 +166,16 @@ circle.focused {
   stroke: #902500;
   stroke-width: 5;
   r: 8;
+  cursor: default;
 }
 
 circle.searchCenter {
   fill: #34495e;
   stroke: none;
   r: 10;
+  cursor: default;
 }
+
 circle.searchCenter:hover {
   fill: #34495e;
 }
@@ -174,6 +201,12 @@ circle.searchCenter:hover {
   border-radius: 50%;
   font-size: 1.5rem;
   outline: none;
+}
+
+.map button:hover {
+  background: #455a6f;
+  color: #FF7944;
+  cursor: pointer;
 }
 
 .map > svg {
@@ -229,6 +262,7 @@ circle.searchCenter:hover {
   align-items: center;
   justify-content: center;
   background-color: rgba(0,0,0, .9);
+  cursor: wait;
 }
 
 .loading i {
@@ -246,6 +280,7 @@ button {
   border: #FF7944;
   padding: 0.5em 0.5em;
   color: white;
+  cursor: pointer;
 }
 
 .value {

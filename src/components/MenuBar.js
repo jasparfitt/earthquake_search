@@ -45,7 +45,7 @@ class MenuBar extends Component{
       this.props.savePageNum(parseInt(this.props.match.params.pageNum,10))
     }
     if ((this.state.minMag || this.state.maxMag || this.state.after || this.state.before || this.state.lat || this.state.lng || this.state.rad) && !this.props.searched) {
-      this.props.search(this.state.maxMag, this.state.minMag, this.state.after, this.state.before, this.state.lat, this.state.lng, this.state.rad, this.props.match.params.pageNum, this.state.sortBy)
+      this.props.search(this.state.maxMag, this.state.minMag, this.state.after, this.state.before, this.state.lat, this.state.lng, this.state.rad, parseInt(this.props.match.params.pageNum,10), this.state.sortBy)
     }
     this.props.resetMap()
   }
@@ -161,6 +161,9 @@ class MenuBar extends Component{
   }
 
   render () {
+    if (parseInt(this.props.match.params.pageNum,10) !== this.props.pageNum) {
+      //   ==========================================================================
+    }
     let minLim = -1;
     let maxLim = 10;
     if (this.state.minMag) {
@@ -206,7 +209,7 @@ class MenuBar extends Component{
               checked={this.state.sortBy==='time-dsc'}
               onChange={this.handleRadioChange}
             />
-            <label for='time-dsc' className='sortName'>Time (newest - oldest)</label><br/>
+          <label htmlFor='time-dsc' className='sortName'>Time (newest - oldest)</label><br/>
             <input
               className='sort'
               type='radio'
@@ -216,7 +219,7 @@ class MenuBar extends Component{
               checked={this.state.sortBy==='time-asc'}
               onChange={this.handleRadioChange}
             />
-            <label for='time-asc' className='sortName'>Time (oldest - newest)</label><br/>
+          <label htmlFor='time-asc' className='sortName'>Time (oldest - newest)</label><br/>
             <input
               className='sort'
               type='radio'
@@ -226,7 +229,7 @@ class MenuBar extends Component{
               checked={this.state.sortBy==='magnitude-dsc'}
               onChange={this.handleRadioChange}
             />
-            <label for='magnitude-dsc' className='sortName'>Magnitude (largest - smallest)</label><br/>
+          <label htmlFor='magnitude-dsc' className='sortName'>Magnitude (largest - smallest)</label><br/>
             <input
               className='sort'
               type='radio'
@@ -236,7 +239,7 @@ class MenuBar extends Component{
               checked={this.state.sortBy==='magnitude-asc'}
               onChange={this.handleRadioChange}
             />
-          <label for='magnitude-asc' className='sortName'>Magnitude (smallest - largest)</label><br/>
+          <label htmlFor='magnitude-asc' className='sortName'>Magnitude (smallest - largest)</label><br/>
             <input className='submit' onClick={this.handleCheck} type='submit' value='Search' />
           </form>
         </div>

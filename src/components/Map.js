@@ -18,7 +18,9 @@ class Map extends Component {
 
   handleMarkerClick = (marker) => {
     const { history: { push } } = this.props;
-    this.props.saveSearch(this.props.history.location.search)
+    if (this.props.history.location.search) {
+      this.props.saveSearch(this.props.history.location.search)
+    }
     this.props.markerZoomAndPan(marker)
     push(`/home/marker/${marker.id}`);
     this.props.setFocused(marker);
@@ -49,8 +51,8 @@ class Map extends Component {
     return(
       <div className='map' id='map'>
         {this.props.noResults? noResultsPop: ''}
-        <button className='in' onClick={ this.handleZoomIn }>{ "+" }</button>
-        <button className='out' onClick={ this.handleZoomOut }>{ "-" }</button>
+        <button className='in' onClick={ this.props.handleZoomIn }>{ "+" }</button>
+        <button className='out' onClick={ this.props.handleZoomOut }>{ "-" }</button>
         <ComposableMap width={width} height={height}>
           <ZoomableGroup center={this.props.center} zoom={this.props.zoom}>
           <Geographies geography={ "/world-10m.json" }>

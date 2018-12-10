@@ -9,6 +9,8 @@ import {
 
 import Home from './Home'
 import Header from './Header'
+import About from './About'
+import NotFound from './NotFound'
 
 class App extends Component {
 
