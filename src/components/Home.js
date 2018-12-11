@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import axios from 'axios';
 import ReactTooltip from "react-tooltip";
+import $ from 'jquery'
 import {
   Route
 } from 'react-router-dom';
@@ -27,7 +28,9 @@ class Home extends Component {
     zoom: 1.6,
     error: false,
     pageNum: 1,
-    last: false
+    last: false,
+    lastSearch: {},
+    pressedSearch: false
   }
 
   // extract data from raw JSON received from API
@@ -97,7 +100,8 @@ class Home extends Component {
         this.setState({
           loading: false,
           searchCount: 'begin',
-          done: false
+          done: false,
+          pressedSearch: false
         })
         setTimeout(() => {
           ReactTooltip.rebuild()
@@ -209,9 +213,7 @@ class Home extends Component {
       limit = Math.pow(10, -10);
       if (minMag) {
         start = Math.pow(10, -1 * parseFloat(minMag, 10));
-        console.log(start)
       }
-      console.log(start)
       if (maxMag) {
         limit = Math.pow(10, -1 * parseFloat(maxMag, 10));
       }
@@ -498,7 +500,31 @@ class Home extends Component {
     })
   }
 
+  didPressSearch = (param) => {
+    if (!param) {
+      let param = this.parseURL(new URL(window.location.href));
+    }
+    this.setState({
+      lastSearch: param
+    })
+  }
+
+
+
   render() {
+      let param = this.parseURL(new URL(window.location.href));
+      if (param.sortBy && !this.state.loading) {
+        if ((this.state.lastSearch.minMag !== param.minMag || this.state.lastSearch.maxMag !== param.maxMag) && !this.state.loading) {
+          this.setState({
+            loading: true
+          })
+          setTimeout(()=> {
+            let thisParam = this.parseURL(new URL(window.location.href));
+            this.didPressSearch(thisParam)
+              this.search(thisParam.maxMag, thisParam.minMag, thisParam.after, thisParam.before, thisParam.lat, thisParam.lng, thisParam.rad, this.state.pageNum, thisParam.sortBy)
+          }, 100)
+        }
+      }
     let loadWindow = (
       <LoadingWindow>
         <div className='loading'> <i className="fas fa-search-location"></i> Searching Database </div>
@@ -548,17 +574,27 @@ class Home extends Component {
               resetMap={this.resetMap}
               savePageNum={this.savePageNum}
               resetPages={this.resetPages}
+              loading={this.state.loading}
+              parseURL={this.parseURL}
+              didPressSearch={this.didPressSearch}
             />
           )}
         />
         <Route exact
           path='/home'
-          render={routeProps => (
+          render={routeProps => {
+            if (this.state.quakes.length) {
+              this.setState({
+                quakes: [],
+                searched: false
+              })
+            }
+            return (
             <MenuBar
               {...routeProps}
               search={this.search}
               searchCount={this.state.searchCount}
-              searched={this.state.searched}
+              searched={false}
               last={this.state.last}
               pageNum={this.state.pageNum}
               pageUp={this.pageUp}
@@ -566,23 +602,28 @@ class Home extends Component {
               resetMap={this.resetMap}
               savePageNum={this.savePageNum}
               resetPages={this.resetPages}
+              loading={this.state.loading}
+              parseURL={this.parseURL}
+              didPressSearch={this.didPressSearch}
             />
-          )}
+          )}}
         />
         <Route
           path='/home/marker/:id'
           render={routeProps => {
-            if (!this.state.quakes.length && !this.state.loading) {
-              this.getOneQuake(routeProps.match.params.id)
-            }
             return (
               <InfoBar
                 {...routeProps}
+                getOneQuake={this.getOneQuake}
+                loading={this.state.loading}
                 quakes={this.state.quakes}
                 removeFocused={this.removeFocused}
                 queryString={this.state.queryString}
                 resetMap={this.resetMap}
                 pageNum={this.state.pageNum}
+                setFocused={this.setFocused}
+                markerZoomAndPan={this.markerZoomAndPan}
+                quake={this.state.focused}
               />
             )
           }}

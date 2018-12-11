@@ -13,7 +13,13 @@ import { withRouter } from 'react-router';
 class Map extends Component {
 
   componentDidMount = () => {
+    console.log(this.props.history)
     this.props.handleMouseWheel();
+    this.backListener = this.props.history.listen(location => {
+      if (location.action === "PUSH") {
+        console.log('thing')
+      }
+    });
   }
 
   handleMarkerClick = (marker) => {
@@ -23,6 +29,7 @@ class Map extends Component {
     }
     this.props.markerZoomAndPan(marker)
     push(`/home/marker/${marker.id}`);
+    console.log(marker)
     this.props.setFocused(marker);
   }
 

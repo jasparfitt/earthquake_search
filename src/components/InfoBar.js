@@ -1,6 +1,11 @@
 import React, {Component} from 'react';
 
 class InfoBar extends Component {
+  state = {
+    quake: this.props.quakes.find(element => {
+      return element.id === this.props.match.params.id
+    })
+  }
 
   handleBack = () => {
     const { history: { push } } = this.props;
@@ -15,6 +20,15 @@ class InfoBar extends Component {
     let quake = this.props.quakes.find(element => {
       return element.id === this.props.match.params.id
     })
+    if (!quake && !this.props.loading) {
+      this.props.getOneQuake(this.props.match.params.id)
+    }
+
+    if (quake !== this.props.quake && quake) {
+      this.props.setFocused(quake)
+      this.props.markerZoomAndPan(quake)
+    }
+
     if (quake) {
       let feltText = (<div>and was felt by {quake.felt} people*.</div>);
       let feltAnnotation = (<div className='annotation'><span>* Based on data collected from <a href='https://earthquake.usgs.gov/data/dyfi/'>Did You Feel It?</a></span></div>)
