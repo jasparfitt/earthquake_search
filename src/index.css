@@ -7,7 +7,7 @@ body {
 }
 
 #root {
-  height: 100vh;
+  height: 100%;
 }
 
 h3 {
@@ -251,18 +251,23 @@ circle.searchCenter:hover {
 }
 
 .loading {
-  position: absolute;
+  position: fixed;
   z-index: 100;
   top: 0;
+  bottom: 0;
   font-size: 2.5em;
   color: white;
   width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: rgba(0,0,0, .9);
   cursor: wait;
+}
+
+.rsm-svg {
+  width: 100%;
+  height: 100%;
 }
 
 .loading i {

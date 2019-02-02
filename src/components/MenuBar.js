@@ -67,9 +67,9 @@ class MenuBar extends Component{
     if (this.state.rad) {
       path += `&rad=${this.state.rad}`
     }
+    this.props.didPressSearch();
     const { history: { push } } = this.props;
     push(path);
-    this.props.didPressSearch();
   }
 
   minMagChange = (e) => {

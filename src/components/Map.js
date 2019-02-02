@@ -34,8 +34,6 @@ class Map extends Component {
   }
 
   render() {
-    let width = window.innerWidth * .8;
-    let height = window.innerHeight - 100;
     let focusedMarker = (
         <Marker key='focused' marker={this.props.focused}>
           <circle
@@ -60,9 +58,9 @@ class Map extends Component {
         {this.props.noResults? noResultsPop: ''}
         <button className='in' onClick={ this.props.handleZoomIn }>{ "+" }</button>
         <button className='out' onClick={ this.props.handleZoomOut }>{ "-" }</button>
-        <ComposableMap width={width} height={height}>
+        <ComposableMap>
           <ZoomableGroup center={this.props.center} zoom={this.props.zoom}>
-          <Geographies geography={ "/world-10m.json" }>
+          <Geographies geography={ "https://raw.githubusercontent.com/zcreativelabs/react-simple-maps/master/topojson-maps/world-10m.json" }>
             {(geographies, projection) => geographies.map(geography => (
               <Geography
                 key={ geography.id }

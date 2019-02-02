@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import axios from 'axios';
 import ReactTooltip from "react-tooltip";
-import $ from 'jquery'
 import {
   Route
 } from 'react-router-dom';
@@ -29,7 +28,10 @@ class Home extends Component {
     error: false,
     pageNum: 1,
     last: false,
-    lastSearch: {},
+    lastSearch: {
+      minMag: null,
+      maxMag:null
+    },
     pressedSearch: false
   }
 
@@ -439,9 +441,9 @@ class Home extends Component {
     this.setState((prevState) => ({
       zoom: prevState.zoom / 1.1,
     }))
-    if (this.state.zoom < 1.5) {
+    if (this.state.zoom < 1) {
       this.setState({
-        zoom: 1.5,
+        zoom: 1,
       })
     }
   }
@@ -501,11 +503,8 @@ class Home extends Component {
   }
 
   didPressSearch = (param) => {
-    if (!param) {
-      let param = this.parseURL(new URL(window.location.href));
-    }
     this.setState({
-      lastSearch: param
+      lastSearch: this.parseURL(new URL(window.location.href))
     })
   }
 
@@ -513,6 +512,8 @@ class Home extends Component {
 
   render() {
       let param = this.parseURL(new URL(window.location.href));
+      console.log(param);
+      console.log(this.state.lastSearch);
       if (param.sortBy && !this.state.loading) {
         if ((this.state.lastSearch.minMag !== param.minMag || this.state.lastSearch.maxMag !== param.maxMag) && !this.state.loading) {
           this.setState({
